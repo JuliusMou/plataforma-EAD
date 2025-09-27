@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil de {{ user.username }}{% endblock %}
+
+{% block content %}
+    <h1>Perfil de {{ user.username }}</h1>
+    <hr>
+    <p><strong>Nome Completo:</strong> {{ user.full_name or 'Não informado' }}</p>
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    <p><strong>Biografia:</strong> {{ user.bio or 'Nenhuma biografia adicionada.' }}</p>
+    <p><strong>Pontuação:</strong> {{ user.score }}</p>
+
+    {# Só mostra o botão de editar se o perfil sendo visto é o do próprio usuário logado #}
+    {% if current_user == user %}
+    <p><a href="{{ url_for('main.editar_perfil') }}">Editar Perfil</a></p>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Cursos Disponíveis{% endblock %}
+
+{% block layout %}
+<div class="container-fluid pt-4">
+    <div class="row">
+
+        <main class="col-md-9">
+            <h1>Nossos Cursos</h1>
+            <p>Explore nossa seleção de cursos de eletrotécnica e automação industrial.</p>
+            <hr>
+
+            {% for curso in cursos %}
+                <article>
+                    <h2>{{ curso.title }}</h2>
+                    <p><strong>Categoria:</strong> {{ curso.category }}</p>
+
+                    <div>
+                        {{ curso.description | markdown_to_html | safe }}
+                    </div>
+
+                    <br>
+                    <a href="{{ url_for('main.pagina_curso', course_id=curso.id) }}" class="btn btn-primary">Ver Curso</a>
+                </article>
+                <hr>
+            {% else %}
+                <p>Nenhum curso disponível no momento. Volte em breve!</p>
+            {% endfor %}
+        </main>
+
+        <aside class="col-md-3">
+            <div class="position-sticky" style="top: 2rem;">
+                <div class="p-4 mb-3 bg-light rounded">
+                    <h4 class="fst-italic">🏆 Ranking Top 10</h4>
+                    <ul class="list-group">
+                        {% for user in ranking_users %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <a href="{{ url_for('main.pagina_perfil', username=user.username) }}" class="text-decoration-none">{{ loop.index }}º. {{ user.username }}</a>
+                                <span class="badge bg-primary rounded-pill">{{ user.score }}</span>
+                            </li>
+                        {% else %}
+                            <li class="list-group-item">Ninguém pontou ainda.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="p-4 bg-light rounded">
+                    <h4 class="fst-italic">👥 Amigos Online</h4>
+                    <div class="d-flex flex-wrap justify-content-center">
+                        <img src="https://i.pravatar.cc/50?img=1" class="rounded-circle m-1 border" alt="amigo 1">
+                        <img src="https://i.pravatar.cc/50?img=2" class="rounded-circle m-1 border" alt="amigo 2">
+                        <img src="https://i.pravatar.cc/50?img=3" class="rounded-circle m-1 border" alt="amigo 3">
+                        <img src="https://i.pravatar.cc/50?img=4" class="rounded-circle m-1 border" alt="amigo 4">
+                        <img src="https://i.pravatar.cc/50?img=5" class="rounded-circle m-1 border" alt="amigo 5">
+                    </div>
+                    <small class="d-block text-end mt-2">
+                        <a href="#">Ver todos</a>
+                    </small>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+</div>
+{% endblock layout %}
+
+{% block content %}{% endblock %}
+{% block sidebar %}{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}{{ aula.title }}{% endblock %}
+
+{% block content %}
+    {# O objeto 'aula' tem uma relação com 'course', então podemos aceder a aula.course.id #}
+    <p><a href="{{ url_for('main.pagina_curso', course_id=aula.course.id) }}">&laquo; Voltar para o curso: {{ aula.course.title }}</a></p>
+
+    <h1>{{ aula.title }}</h1>
+    <hr>
+
+    <div>
+        {# O conteúdo da aula é processado pelo filtro de markdown #}
+        {{ aula.content | markdown_to_html | safe }}
+    </div>
+
+    <hr>
+
+    {# Se a aula tiver um quiz, ele será exibido aqui #}
+    {% if aula.quiz %}
+        <h2>{{ aula.quiz.title }}</h2>
+        <form action="{{ url_for('main.submit_quiz', quiz_id=aula.quiz.id) }}" method="POST">
+            {% for pergunta in aula.quiz.questions %}
+                <div style="margin-bottom: 20px;">
+                    <p><strong>{{ loop.index }}. {{ pergunta.text }}</strong></p>
+                    {% for resposta in pergunta.answers %}
+                        <div>
+                            <input type="radio" name="pergunta_{{ pergunta.id }}" id="resposta_{{ resposta.id }}" value="{{ resposta.id }}" required>
+                            <label for="resposta_{{ resposta.id }}">{{ resposta.text }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            <br>
+            <button type="submit" class="btn btn-primary">Enviar Respostas</button>
+        </form>
+    {% else %}
+        {# Se não houver quiz, o botão de concluir aula normal é exibido #}
+        <form action="{{ url_for('main.concluir_aula', lesson_id=aula.id) }}" method="POST">
+            <button type="submit" class="btn btn-success">Marcar como Concluída</button>
+        </form>
+    {% endif %}
+
+{% endblock %}

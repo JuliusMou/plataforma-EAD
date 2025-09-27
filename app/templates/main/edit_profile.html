@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Perfil{% endblock %}
+
+{% block content %}
+    <h1>Editar Perfil</h1>
+    <hr>
+    <form action="" method="post" novalidate>
+        {# Este token é ESSENCIAL para a segurança CSRF fornecida pelo Flask-WTF #}
+        {{ form.hidden_tag() }}
+
+        <p>
+            {{ form.full_name.label }}<br>
+            {{ form.full_name(size=60) }}<br>
+            {# Mostra erros de validação, se houver #}
+            {% for error in form.full_name.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.bio.label }}<br>
+            {{ form.bio(cols=50, rows=4) }}<br>
+            {% for error in form.bio.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+{% endblock %}

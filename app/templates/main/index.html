@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Página Principal - Plataforma EAD{% endblock %}
+
+{# 1. Usa o bloco de configuração para definir a classe do conteúdo principal como largura total. #}
+{% block sidebar_config %}
+    {% set main_content_class = 'col-md-12' %}
+{% endblock %}
+
+{# 2. Garante que o bloco da sidebar permaneça vazio (boa prática). #}
+{% block sidebar %}{% endblock %}
+
+{# 3. O conteúdo da página é renderizado normalmente dentro do <main>, que agora tem a classe col-md-12. #}
+{% block content %}
+    <h1>Bem-vindo à Plataforma, {{ current_user.username }}!</h1>
+    <p>Este é o seu painel principal. Em breve, aqui estarão os seus cursos e pontuações.</p>
+{% endblock %}
