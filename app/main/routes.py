@@ -11,6 +11,16 @@ def markdown_to_html(text):
     """Converte uma string de texto em Markdown para HTML."""
     return markdown.markdown(text)
 
+# --- NOVA ROTA ADICIONADA ---
+@main.route('/usuarios')
+@login_required
+def pagina_usuarios():
+    """ Exibe uma lista de todos os usuários da plataforma. """
+    # A consulta agora busca todos os usuários, exceto o que está logado.
+    all_users = User.query.filter(User.id != current_user.id).order_by(User.username.asc()).all()
+    return render_template('main/users.html', users=all_users)
+
+
 @main.route('/')
 @login_required
 def pagina_principal():
