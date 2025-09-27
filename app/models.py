@@ -1,5 +1,3 @@
-# plataforma_ead/app/models.py (VERSÃO ESTÁVEL)
-
 from . import db
 from datetime import datetime
 from flask_login import UserMixin
@@ -9,6 +7,13 @@ from app import login_manager
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+# Tabela de associação para aulas concluídas
+lesson_completions = db.Table('lesson_completions',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('lesson_id', db.Integer, db.ForeignKey('lessons.id'), primary_key=True)
+)
 
 
 class User(UserMixin, db.Model):
@@ -23,7 +28,14 @@ class User(UserMixin, db.Model):
     bio = db.Column(db.Text, nullable=True)
     profile_picture = db.Column(db.String(255), nullable=False, server_default='default.jpg')
     is_admin = db.Column(db.Boolean, server_default='f', nullable=False)
-    # O relacionamento 'completed_lessons' e o método 'has_completed_lesson' foram removidos.
+
+    completed_lessons = db.relationship('Lesson', secondary=lesson_completions,
+                                        lazy='subquery',
+                                        backref=db.backref('completed_by_users', lazy=True))
+
+    def has_completed_lesson(self, lesson):
+        """Verifica se o usuário já completou uma aula específica."""
+        return lesson in self.completed_lessons
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -112,4 +124,21 @@ class Answer(db.Model):
             return self.text[:80] + '...'
         return self.text
 
-# A tabela 'lesson_completions' e o model 'Friendship' foram removidos.
+
+# --- NOVO MODEL ADICIONADO ---
+class Friendship(db.Model):
+    """
+    Modelo para representar a relação de amizade entre dois usuários.
+    """
+    __tablename__ = 'friendships'
+    id = db.Column(db.Integer, primary_key=True)
+    requester_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    addressee_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='pending')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    requester = db.relationship('User', foreign_keys=[requester_id], backref='sent_friend_requests')
+    addressee = db.relationship('User', foreign_keys=[addressee_id], backref='received_friend_requests')
+
+    def __repr__(self):
+        return f'<Friendship from {self.requester.username} to {self.addressee.username} - Status: {self.status}>'
