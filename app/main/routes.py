@@ -14,14 +14,26 @@ def markdown_to_html(text):
     return markdown.markdown(text)
 
 
+# --- NOVO CONTEXT PROCESSOR ADICIONADO ---
+@main.app_context_processor
+def inject_friends():
+    """ Injeta a lista de amigos do usuário atual em todos os templates. """
+    if current_user.is_authenticated:
+        # Usamos o novo método que criamos no model
+        friends = current_user.get_friends()
+        return dict(friends_list=friends)
+    return dict(friends_list=[])
+
+
 @main.route('/usuarios')
 @login_required
 def pagina_usuarios():
-    """ Exibe uma lista de todos os usuários da plataforma. """
+    # ... (sem alterações)
     all_users = User.query.filter(User.id != current_user.id).order_by(User.username.asc()).all()
     return render_template('main/users.html', users=all_users)
 
 
+# ... (o resto do ficheiro 'routes.py' permanece igual)
 @main.route('/')
 @login_required
 def pagina_principal():
@@ -141,7 +153,6 @@ def pagina_curso(course_id):
     return render_template('main/course_detail.html', curso=curso)
 
 
-# --- ROTA DA AULA MODIFICADA ---
 @main.route('/cursos/<int:course_id>/aula/<int:lesson_id>')
 @login_required
 def pagina_aula(course_id, lesson_id):
@@ -161,7 +172,6 @@ def pagina_aula(course_id, lesson_id):
         current_lesson_index + 1] if current_lesson_index is not None and current_lesson_index < len(
         lessons_list) - 1 else None
 
-    # Verifica se o usuário já completou esta aula
     is_completed = current_user.has_completed_lesson(aula)
 
     return render_template('main/lesson_detail.html',
@@ -169,25 +179,20 @@ def pagina_aula(course_id, lesson_id):
                            curso=curso,
                            prev_lesson=prev_lesson,
                            next_lesson=next_lesson,
-                           is_completed=is_completed)  # Envia o status para o template
+                           is_completed=is_completed)
 
 
-# --- ROTA DE CONCLUIR AULA MODIFICADA ---
 @main.route('/aula/concluir/<int:lesson_id>', methods=['POST'])
 @login_required
 def concluir_aula(lesson_id):
     aula = Lesson.query.get_or_404(lesson_id)
 
-    # Verifica se a aula AINDA NÃO foi concluída pelo usuário
     if not current_user.has_completed_lesson(aula):
-        # Se não foi, adiciona o registro de conclusão
         current_user.completed_lessons.append(aula)
-        # E só então adiciona os pontos
         current_user.score += 10
         db.session.commit()
         flash(f'Parabéns! Você concluiu a aula "{aula.title}" e ganhou 10 pontos!', 'success')
     else:
-        # Se a aula já foi concluída, apenas informa o usuário
         flash(f'Você já havia concluído a aula "{aula.title}".', 'info')
 
     return redirect(url_for('main.pagina_aula', course_id=aula.course.id, lesson_id=aula.id))

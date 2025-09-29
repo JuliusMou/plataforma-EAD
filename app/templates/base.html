@@ -98,6 +98,22 @@
                                 {% endfor %}
                             </ul>
                         </div>
+
+                        <div class="p-4 bg-light rounded">
+                            <h4 class="fst-italic">👥 Meus Amigos</h4>
+                            {% if friends_list %}
+                                <div class="d-flex flex-wrap">
+                                {% for friend in friends_list %}
+                                    <a href="{{ url_for('main.pagina_perfil', username=friend.username) }}" title="{{ friend.username }}">
+                                        <img src="{{ url_for('static', filename='profile_pics/' + friend.profile_picture) }}" class="rounded-circle m-1 border" alt="{{ friend.username }}" style="width: 50px; height: 50px; object-fit: cover;">
+                                    </a>
+                                {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted small">Você ainda não tem amigos. Adicione alguém da página Comunidade!</p>
+                            {% endif %}
+                        </div>
+
                     </div>
                 {% endblock sidebar %}
             </aside>

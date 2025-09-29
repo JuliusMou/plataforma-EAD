@@ -9,11 +9,10 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-# Tabela de associação para aulas concluídas
 lesson_completions = db.Table('lesson_completions',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
-    db.Column('lesson_id', db.Integer, db.ForeignKey('lessons.id'), primary_key=True)
-)
+                              db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+                              db.Column('lesson_id', db.Integer, db.ForeignKey('lessons.id'), primary_key=True)
+                              )
 
 
 class User(UserMixin, db.Model):
@@ -37,6 +36,22 @@ class User(UserMixin, db.Model):
         """Verifica se o usuário já completou uma aula específica."""
         return lesson in self.completed_lessons
 
+    # --- NOVO MÉTODO ADICIONADO ---
+    def get_friends(self):
+        """ Retorna uma lista de usuários que são amigos. """
+        friends = []
+        # Procura por amizades que o usuário pediu e foram aceites
+        sent_requests = Friendship.query.filter_by(requester_id=self.id, status='accepted').all()
+        for req in sent_requests:
+            friends.append(req.addressee)
+
+        # Procura por amizades que o usuário recebeu e aceitou
+        received_requests = Friendship.query.filter_by(addressee_id=self.id, status='accepted').all()
+        for req in received_requests:
+            friends.append(req.requester)
+
+        return friends
+
     def __repr__(self):
         return f'<User {self.username}>'
 
@@ -45,6 +60,7 @@ class User(UserMixin, db.Model):
 
 
 class Course(db.Model):
+    # ... (sem alterações)
     __tablename__ = 'courses'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
@@ -61,6 +77,7 @@ class Course(db.Model):
 
 
 class Lesson(db.Model):
+    # ... (sem alterações)
     __tablename__ = 'lessons'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
@@ -77,6 +94,7 @@ class Lesson(db.Model):
 
 
 class Quiz(db.Model):
+    # ... (sem alterações)
     __tablename__ = 'quizzes'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
@@ -92,6 +110,7 @@ class Quiz(db.Model):
 
 
 class Question(db.Model):
+    # ... (sem alterações)
     __tablename__ = 'questions'
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
@@ -109,6 +128,7 @@ class Question(db.Model):
 
 
 class Answer(db.Model):
+    # ... (sem alterações)
     __tablename__ = 'answers'
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
@@ -125,11 +145,8 @@ class Answer(db.Model):
         return self.text
 
 
-# --- NOVO MODEL ADICIONADO ---
 class Friendship(db.Model):
-    """
-    Modelo para representar a relação de amizade entre dois usuários.
-    """
+    # ... (sem alterações)
     __tablename__ = 'friendships'
     id = db.Column(db.Integer, primary_key=True)
     requester_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
