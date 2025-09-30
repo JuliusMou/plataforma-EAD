@@ -1,4 +1,5 @@
 import markdown
+from datetime import datetime  # Importe datetime
 from . import main
 from flask_login import login_required, current_user
 from flask import render_template, flash, redirect, url_for, request
@@ -8,18 +9,31 @@ from .forms import EditProfileForm
 from sqlalchemy import or_
 
 
+# --- NOVA FUNÇÃO ADICIONADA ---
+@main.before_app_request
+def before_request():
+    """
+    Executa antes de CADA requisição na aplicação.
+    Usaremos para atualizar o 'last_seen' do usuário.
+    """
+    # Verifica se o usuário atual está autenticado
+    if current_user.is_authenticated:
+        # Atualiza o campo 'last_seen' para o horário atual
+        current_user.last_seen = datetime.utcnow()
+        # Salva a alteração no banco de dados
+        db.session.commit()
+
+
 @main.app_template_filter('markdown_to_html')
 def markdown_to_html(text):
     """Converte uma string de texto em Markdown para HTML."""
     return markdown.markdown(text)
 
 
-# --- NOVO CONTEXT PROCESSOR ADICIONADO ---
 @main.app_context_processor
 def inject_friends():
     """ Injeta a lista de amigos do usuário atual em todos os templates. """
     if current_user.is_authenticated:
-        # Usamos o novo método que criamos no model
         friends = current_user.get_friends()
         return dict(friends_list=friends)
     return dict(friends_list=[])
@@ -28,12 +42,11 @@ def inject_friends():
 @main.route('/usuarios')
 @login_required
 def pagina_usuarios():
-    # ... (sem alterações)
     all_users = User.query.filter(User.id != current_user.id).order_by(User.username.asc()).all()
     return render_template('main/users.html', users=all_users)
 
 
-# ... (o resto do ficheiro 'routes.py' permanece igual)
+# ... O restante do arquivo permanece exatamente o mesmo ...
 @main.route('/')
 @login_required
 def pagina_principal():

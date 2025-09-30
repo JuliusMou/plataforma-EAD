@@ -1,5 +1,5 @@
 from . import db
-from datetime import datetime
+from datetime import datetime, timedelta  # Adicione timedelta
 from flask_login import UserMixin
 from app import login_manager
 
@@ -28,6 +28,10 @@ class User(UserMixin, db.Model):
     profile_picture = db.Column(db.String(255), nullable=False, server_default='default.jpg')
     is_admin = db.Column(db.Boolean, server_default='f', nullable=False)
 
+    # --- NOVO CAMPO ADICIONADO ---
+    # Armazena a última vez que o usuário fez uma requisição.
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+
     completed_lessons = db.relationship('Lesson', secondary=lesson_completions,
                                         lazy='subquery',
                                         backref=db.backref('completed_by_users', lazy=True))
@@ -36,21 +40,31 @@ class User(UserMixin, db.Model):
         """Verifica se o usuário já completou uma aula específica."""
         return lesson in self.completed_lessons
 
-    # --- NOVO MÉTODO ADICIONADO ---
     def get_friends(self):
         """ Retorna uma lista de usuários que são amigos. """
         friends = []
-        # Procura por amizades que o usuário pediu e foram aceites
         sent_requests = Friendship.query.filter_by(requester_id=self.id, status='accepted').all()
         for req in sent_requests:
             friends.append(req.addressee)
 
-        # Procura por amizades que o usuário recebeu e aceitou
         received_requests = Friendship.query.filter_by(addressee_id=self.id, status='accepted').all()
         for req in received_requests:
             friends.append(req.requester)
 
         return friends
+
+    # --- NOVO MÉTODO ADICIONADO ---
+    def is_online(self):
+        """
+        Verifica se o usuário esteve ativo nos últimos 5 minutos.
+        Retorna True se estiver online, False caso contrário.
+        """
+        if self.last_seen:
+            # Calcula a diferença entre o tempo atual e a última vez que o usuário foi visto
+            time_difference = datetime.utcnow() - self.last_seen
+            # Retorna True se a diferença for menor que 5 minutos
+            return time_difference < timedelta(minutes=5)
+        return False
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -59,6 +73,7 @@ class User(UserMixin, db.Model):
         return self.username
 
 
+# ... O restante do arquivo (Course, Lesson, Quiz, etc.) permanece o mesmo ...
 class Course(db.Model):
     # ... (sem alterações)
     __tablename__ = 'courses'
