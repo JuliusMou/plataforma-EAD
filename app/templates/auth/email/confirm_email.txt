@@ -1,0 +1,11 @@
+Olá, {{ user.username }},
+
+Bem-vindo à Plataforma EAD! Por favor, confirme sua conta clicando no link abaixo:
+{{ url_for('auth.confirm_email', token=token, _external=True) }}
+
+O link é válido por 1 hora.
+
+Se você não se cadastrou em nosso site, por favor, ignore este e-mail.
+
+Atenciosamente,
+Equipe da Plataforma EAD

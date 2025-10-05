@@ -5,11 +5,9 @@ from datetime import datetime, timedelta
 from flask_login import UserMixin
 from app import login_manager
 from flask import current_app
-# --- INÍCIO DAS ALTERAÇÕES ---
-# 1. Importa a nova classe Serializer e as exceções necessárias.
 from itsdangerous import URLSafeTimedSerializer as Serializer
 from itsdangerous.exc import SignatureExpired, BadTimeSignature
-# --- FIM DAS ALTERAÇÕES ---
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -35,61 +33,58 @@ class User(UserMixin, db.Model):
     profile_picture = db.Column(db.String(255), nullable=False, server_default='default.jpg')
     is_admin = db.Column(db.Boolean, server_default='f', nullable=False)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    confirmed = db.Column(db.Boolean, nullable=False, default=False)
 
     completed_lessons = db.relationship('Lesson', secondary=lesson_completions,
                                         lazy='subquery',
                                         backref=db.backref('completed_by_users', lazy=True))
 
-    # --- INÍCIO DAS ALTERAÇÕES ---
-    # 2. Atualiza o método para gerar o token.
-    def get_reset_password_token(self):
-        """
-        Gera um token de redefinição de senha.
-        A validade do token será verificada no momento da leitura.
-        :return: O token codificado como string.
-        """
+    def get_confirmation_token(self):
         s = Serializer(current_app.config['SECRET_KEY'])
-        # Dumps do ID do usuário. O serializer lida com a codificação para URL-safe.
         return s.dumps(self.id)
 
-    # 3. Atualiza o método para verificar o token.
+    # --- MÉTODO MODIFICADO ---
+    # Agora é um método estático que retorna o usuário se o token for válido
     @staticmethod
-    def verify_reset_password_token(token):
-        """
-        Verifica o token de redefinição de senha.
-        :param token: O token a ser verificado.
-        :return: O objeto User correspondente, ou None se o token for inválido/expirado.
-        """
+    def verify_confirmation_token(token):
+        """ Verifica o token e retorna o usuário correspondente. """
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
-            # O parâmetro 'max_age' verifica o tempo de expiração em segundos.
-            # 1800 segundos = 30 minutos.
-            user_id = s.loads(token, max_age=1800)
+            # Token expira em 1 hora (3600 segundos)
+            user_id = s.loads(token, max_age=3600)
         except (SignatureExpired, BadTimeSignature):
-            # O token expirou ou é inválido.
             return None
         return User.query.get(user_id)
-    # --- FIM DAS ALTERAÇÕES ---
+
+    # O método 'confirm_email' foi removido pois a lógica agora está na rota
+
+    def get_reset_password_token(self):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        return s.dumps(self.id)
+
+    @staticmethod
+    def verify_reset_password_token(token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            user_id = s.loads(token, max_age=1800)
+        except (SignatureExpired, BadTimeSignature):
+            return None
+        return User.query.get(user_id)
 
     def has_completed_lesson(self, lesson):
-        """Verifica se o usuário já completou uma aula específica."""
         return lesson in self.completed_lessons
 
     def get_friends(self):
-        """ Retorna uma lista de usuários que são amigos. """
         friends = []
         sent_requests = Friendship.query.filter_by(requester_id=self.id, status='accepted').all()
         for req in sent_requests:
             friends.append(req.addressee)
-
         received_requests = Friendship.query.filter_by(addressee_id=self.id, status='accepted').all()
         for req in received_requests:
             friends.append(req.requester)
-
         return friends
 
     def is_online(self):
-        """ Verifica se o usuário esteve ativo nos últimos 5 minutos. """
         if self.last_seen:
             time_difference = datetime.utcnow() - self.last_seen
             return time_difference < timedelta(minutes=5)
@@ -101,8 +96,10 @@ class User(UserMixin, db.Model):
     def __str__(self):
         return self.username
 
-# ... O restante do arquivo (Course, Lesson, etc.) permanece o mesmo ...
+
+# ... (outros Models sem alterações) ...
 class Course(db.Model):
+    # ...
     __tablename__ = 'courses'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
@@ -119,6 +116,7 @@ class Course(db.Model):
 
 
 class Lesson(db.Model):
+    # ...
     __tablename__ = 'lessons'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
@@ -135,6 +133,7 @@ class Lesson(db.Model):
 
 
 class Quiz(db.Model):
+    # ...
     __tablename__ = 'quizzes'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
@@ -150,6 +149,7 @@ class Quiz(db.Model):
 
 
 class Question(db.Model):
+    # ...
     __tablename__ = 'questions'
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
@@ -167,6 +167,7 @@ class Question(db.Model):
 
 
 class Answer(db.Model):
+    # ...
     __tablename__ = 'answers'
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
@@ -184,6 +185,7 @@ class Answer(db.Model):
 
 
 class Friendship(db.Model):
+    # ...
     __tablename__ = 'friendships'
     id = db.Column(db.Integer, primary_key=True)
     requester_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)

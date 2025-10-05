@@ -14,8 +14,23 @@ def send_password_reset_email(user):
                   sender=current_app.config['MAIL_DEFAULT_SENDER'],
                   recipients=[user.email])
 
-    # Corpo do e-mail em formato texto e HTML
     msg.body = render_template('auth/email/reset_password.txt', user=user, token=token)
     msg.html = render_template('auth/email/reset_password.html', user=user, token=token)
+
+    mail.send(msg)
+
+
+def send_confirmation_email(user):
+    """
+    Envia o e-mail de confirmação de conta para um novo usuário.
+    """
+    token = user.get_confirmation_token()
+    msg = Message('Confirme sua Conta - Plataforma EAD',
+                  sender=current_app.config['MAIL_DEFAULT_SENDER'],
+                  recipients=[user.email])
+
+    # Corpo do e-mail em formato texto e HTML
+    msg.body = render_template('auth/email/confirm_email.txt', user=user, token=token)
+    msg.html = render_template('auth/email/confirm_email.html', user=user, token=token)
 
     mail.send(msg)

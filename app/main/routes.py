@@ -1,5 +1,7 @@
+# app/main/routes.py
+
 import markdown
-from datetime import datetime  # Importe datetime
+from datetime import datetime
 from . import main
 from flask_login import login_required, current_user
 from flask import render_template, flash, redirect, url_for, request
@@ -9,19 +11,20 @@ from .forms import EditProfileForm
 from sqlalchemy import or_
 
 
-# --- NOVA FUNÇÃO ADICIONADA ---
 @main.before_app_request
 def before_request():
-    """
-    Executa antes de CADA requisição na aplicação.
-    Usaremos para atualizar o 'last_seen' do usuário.
-    """
-    # Verifica se o usuário atual está autenticado
+    """ Executa antes de CADA requisição na aplicação. """
     if current_user.is_authenticated:
-        # Atualiza o campo 'last_seen' para o horário atual
+        # Atualiza o 'last_seen' do usuário
         current_user.last_seen = datetime.utcnow()
-        # Salva a alteração no banco de dados
         db.session.commit()
+
+        # LÓGICA CRÍTICA para redirecionar usuários não confirmados
+        if not current_user.confirmed \
+                and request.blueprint != 'auth' \
+                and request.endpoint != 'static':
+            flash('Por favor, confirme sua conta para acessar esta página.', 'warning')
+            return redirect(url_for('auth.resend_confirmation'))
 
 
 @main.app_template_filter('markdown_to_html')
@@ -46,7 +49,6 @@ def pagina_usuarios():
     return render_template('main/users.html', users=all_users)
 
 
-# ... O restante do arquivo permanece exatamente o mesmo ...
 @main.route('/')
 @login_required
 def pagina_principal():
