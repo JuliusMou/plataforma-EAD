@@ -39,20 +39,17 @@
                         </div>
                     </form>
 
-                    {# --- NOVA SEÇÃO ADICIONADA --- #}
                     <div class="text-center mt-4">
                         <small>
-                            {# O link de recuperação de senha ainda não tem uma rota, mas já o deixamos aqui. #}
-                            <a href="#">Esqueceu a senha?</a>
+                            {# --- LINHA MODIFICADA AQUI --- #}
+                            <a href="{{ url_for('auth.pagina_reset_password_request') }}">Esqueceu a senha?</a>
                         </small>
                         <hr>
                         <small class="text-muted">
                             Ainda não tem uma conta?
-                            {# Este link já aponta para a rota de cadastro que criamos. #}
                             <a href="{{ url_for('auth.pagina_cadastro') }}">Cadastre-se</a>
                         </small>
                     </div>
-                    {# --- FIM DA NOVA SEÇÃO --- #}
 
                 </div>
             </div>

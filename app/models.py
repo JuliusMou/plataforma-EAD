@@ -1,8 +1,15 @@
+# app/models.py
+
 from . import db
-from datetime import datetime, timedelta  # Adicione timedelta
+from datetime import datetime, timedelta
 from flask_login import UserMixin
 from app import login_manager
-
+from flask import current_app
+# --- INÍCIO DAS ALTERAÇÕES ---
+# 1. Importa a nova classe Serializer e as exceções necessárias.
+from itsdangerous import URLSafeTimedSerializer as Serializer
+from itsdangerous.exc import SignatureExpired, BadTimeSignature
+# --- FIM DAS ALTERAÇÕES ---
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -27,14 +34,42 @@ class User(UserMixin, db.Model):
     bio = db.Column(db.Text, nullable=True)
     profile_picture = db.Column(db.String(255), nullable=False, server_default='default.jpg')
     is_admin = db.Column(db.Boolean, server_default='f', nullable=False)
-
-    # --- NOVO CAMPO ADICIONADO ---
-    # Armazena a última vez que o usuário fez uma requisição.
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
 
     completed_lessons = db.relationship('Lesson', secondary=lesson_completions,
                                         lazy='subquery',
                                         backref=db.backref('completed_by_users', lazy=True))
+
+    # --- INÍCIO DAS ALTERAÇÕES ---
+    # 2. Atualiza o método para gerar o token.
+    def get_reset_password_token(self):
+        """
+        Gera um token de redefinição de senha.
+        A validade do token será verificada no momento da leitura.
+        :return: O token codificado como string.
+        """
+        s = Serializer(current_app.config['SECRET_KEY'])
+        # Dumps do ID do usuário. O serializer lida com a codificação para URL-safe.
+        return s.dumps(self.id)
+
+    # 3. Atualiza o método para verificar o token.
+    @staticmethod
+    def verify_reset_password_token(token):
+        """
+        Verifica o token de redefinição de senha.
+        :param token: O token a ser verificado.
+        :return: O objeto User correspondente, ou None se o token for inválido/expirado.
+        """
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            # O parâmetro 'max_age' verifica o tempo de expiração em segundos.
+            # 1800 segundos = 30 minutos.
+            user_id = s.loads(token, max_age=1800)
+        except (SignatureExpired, BadTimeSignature):
+            # O token expirou ou é inválido.
+            return None
+        return User.query.get(user_id)
+    # --- FIM DAS ALTERAÇÕES ---
 
     def has_completed_lesson(self, lesson):
         """Verifica se o usuário já completou uma aula específica."""
@@ -53,16 +88,10 @@ class User(UserMixin, db.Model):
 
         return friends
 
-    # --- NOVO MÉTODO ADICIONADO ---
     def is_online(self):
-        """
-        Verifica se o usuário esteve ativo nos últimos 5 minutos.
-        Retorna True se estiver online, False caso contrário.
-        """
+        """ Verifica se o usuário esteve ativo nos últimos 5 minutos. """
         if self.last_seen:
-            # Calcula a diferença entre o tempo atual e a última vez que o usuário foi visto
             time_difference = datetime.utcnow() - self.last_seen
-            # Retorna True se a diferença for menor que 5 minutos
             return time_difference < timedelta(minutes=5)
         return False
 
@@ -72,10 +101,8 @@ class User(UserMixin, db.Model):
     def __str__(self):
         return self.username
 
-
-# ... O restante do arquivo (Course, Lesson, Quiz, etc.) permanece o mesmo ...
+# ... O restante do arquivo (Course, Lesson, etc.) permanece o mesmo ...
 class Course(db.Model):
-    # ... (sem alterações)
     __tablename__ = 'courses'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
@@ -92,7 +119,6 @@ class Course(db.Model):
 
 
 class Lesson(db.Model):
-    # ... (sem alterações)
     __tablename__ = 'lessons'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
@@ -109,7 +135,6 @@ class Lesson(db.Model):
 
 
 class Quiz(db.Model):
-    # ... (sem alterações)
     __tablename__ = 'quizzes'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
@@ -125,7 +150,6 @@ class Quiz(db.Model):
 
 
 class Question(db.Model):
-    # ... (sem alterações)
     __tablename__ = 'questions'
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
@@ -143,7 +167,6 @@ class Question(db.Model):
 
 
 class Answer(db.Model):
-    # ... (sem alterações)
     __tablename__ = 'answers'
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
@@ -161,7 +184,6 @@ class Answer(db.Model):
 
 
 class Friendship(db.Model):
-    # ... (sem alterações)
     __tablename__ = 'friendships'
     id = db.Column(db.Integer, primary_key=True)
     requester_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
