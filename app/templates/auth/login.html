@@ -6,13 +6,17 @@
 
 {% block title %}Login - Plataforma EAD{% endblock %}
 
-{# Sobrescrevemos o layout padrão para remover a sidebar e centralizar tudo #}
 {% block layout %}
 <div class="container min-vh-100 d-flex align-items-center justify-content-center">
     {% block content %}
         <div class="col-md-6 col-lg-4">
             <div class="card shadow-sm">
                 <div class="card-body">
+                    {# --- LINK ADICIONADO AQUI --- #}
+                    <div class="text-center mb-4">
+                        <a href="{{ url_for('main.landing_page') }}">← Voltar para a Página Principal</a>
+                    </div>
+
                     <h2 class="card-title text-center">Acesse sua Conta</h2>
                     <hr>
                     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -41,7 +45,6 @@
 
                     <div class="text-center mt-4">
                         <small>
-                            {# --- LINHA MODIFICADA AQUI --- #}
                             <a href="{{ url_for('auth.pagina_reset_password_request') }}">Esqueceu a senha?</a>
                         </small>
                         <hr>

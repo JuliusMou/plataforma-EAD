@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Meu Painel - Plataforma EAD{% endblock %}
+
+{% block content %}
+    <h1>Bem-vindo à Plataforma, {{ current_user.username }}!</h1>
+    <p>Este é o seu painel principal.</p>
+
+    {# --- Contagem de Usuários --- #}
+    <p class="text-muted">
+        Atualmente somos <strong>{{ total_users }}</strong> membros na plataforma, com <strong>{{ online_users }}</strong> online agora.
+    </p>
+
+    <hr>
+    <h2>Meus Cursos em Andamento</h2>
+    <p class="text-muted">Ainda não há cursos aqui. Explore nosso catálogo!</p>
+    <a href="{{ url_for('main.pagina_cursos') }}" class="btn btn-primary">Ver Cursos</a>
+{% endblock %}

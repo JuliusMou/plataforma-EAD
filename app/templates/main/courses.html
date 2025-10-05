@@ -2,43 +2,77 @@
 
 {% block title %}Cursos Disponíveis{% endblock %}
 
-{% block layout %}
-<div class="container-fluid pt-4">
-    <div class="row">
+{% block content %}
+    <h1>Nossos Cursos</h1>
+    <p>Explore nossa seleção de cursos de eletrotécnica e automação industrial. Inscreva-se para começar a aprender!</p>
+    <hr>
 
-        <main class="col-md-9">
-            <h1>Nossos Cursos</h1>
-            <p>Explore nossa seleção de cursos de eletrotécnica e automação industrial.</p>
-            <hr>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for curso in cursos %}
+            <div class="col">
+                <div class="card h-100 d-flex flex-column">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ curso.title }}</h5>
 
-            {% for curso in cursos %}
-                <article>
-                    <h2>{{ curso.title }}</h2>
-                    <p><strong>Categoria:</strong> {{ curso.category }}</p>
+                        <div class="mb-2">
+                            {% set avg_rating = curso.average_rating() %}
+                            {% for i in range(1, 6) %}
+                                <span class="{% if i <= avg_rating %}text-warning{% else %}text-muted{% endif %}">★</span>
+                            {% endfor %}
+                            <small class="text-muted ms-1">({{ avg_rating }})</small>
+                        </div>
 
-                    <div>
-                        {{ curso.description | markdown_to_html | safe }}
+                        <p class="card-text">{{ curso.description | truncate(100) }}</p>
+
+                        {# --- LÓGICA DE PONTUAÇÃO ATUALIZADA --- #}
+                        {% if current_user.is_enrolled(curso) %}
+                            {% set enrollment = current_user.get_enrollment_for(curso) %}
+                            <span class="badge bg-success mb-2">Inscrito</span>
+                            <p class="card-text">
+                                <small class="text-muted">Sua pontuação: {{ enrollment.score }} pontos</small>
+                            </p>
+                        {% else %}
+                             <span class="badge bg-secondary mb-2">Não Inscrito</span>
+                        {% endif %}
+
                     </div>
 
-                    <br>
-                    <a href="{{ url_for('main.pagina_curso', course_id=curso.id) }}" class="btn btn-primary">Ver Curso</a>
-                </article>
-                <hr>
-            {% else %}
+                    <div class="card-footer mt-auto">
+                        <form action="{{ url_for('main.rate_course', course_id=curso.id) }}" method="POST" class="mb-2">
+                            <small class="text-muted me-2">Sua avaliação:</small>
+                            <div class="btn-group" role="group">
+                                {% set user_rating = curso.user_rating(current_user) %}
+                                {% for i in range(1, 6) %}
+                                    <button type="submit" name="stars" value="{{ i }}"
+                                            class="btn btn-sm {% if i == user_rating %}btn-warning{% else %}btn-outline-secondary{% endif %}">
+                                        {{ i }} ★
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        </form>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('main.pagina_curso', course_id=curso.id) }}" class="btn btn-sm btn-outline-primary">Ver Curso</a>
+
+                            <div>
+                                {% if current_user.is_enrolled(curso) %}
+                                    <form action="{{ url_for('main.unenroll', course_id=curso.id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-warning">Cancelar Inscrição</button>
+                                    </form>
+                                {% else %}
+                                    <form action="{{ url_for('main.enroll', course_id=curso.id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-success">Inscrever-se</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col">
                 <p>Nenhum curso disponível no momento. Volte em breve!</p>
-            {% endfor %}
-        </main>
-
-        {# A sidebar com o ranking e a lista de amigos já é herdada do base.html,
-           então a versão estática que estava aqui foi removida para evitar duplicação. #}
-        <aside class="col-md-3">
-            {% block sidebar %}
-                {{ super() }}
-            {% endblock sidebar %}
-        </aside>
-
+            </div>
+        {% endfor %}
     </div>
-</div>
-{% endblock layout %}
-
-{% block content %}{% endblock %}
+{% endblock %}

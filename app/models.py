@@ -7,6 +7,7 @@ from app import login_manager
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer as Serializer
 from itsdangerous.exc import SignatureExpired, BadTimeSignature
+from sqlalchemy import func
 
 
 @login_manager.user_loader
@@ -20,6 +21,20 @@ lesson_completions = db.Table('lesson_completions',
                               )
 
 
+# A tabela 'enrollments' foi removida daqui.
+
+# --- NOVO MODEL DE ASSOCIAÇÃO ---
+class Enrollment(db.Model):
+    __tablename__ = 'enrollments'
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), primary_key=True)
+    score = db.Column(db.Integer, default=0)  # Nova coluna de pontuação
+
+    # Relacionamentos para facilitar o acesso
+    user = db.relationship('User', back_populates='enrollments')
+    course = db.relationship('Course', back_populates='enrollments')
+
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -28,7 +43,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     full_name = db.Column(db.String(120), nullable=True)
-    score = db.Column(db.Integer, server_default='0', nullable=False)
+    score = db.Column(db.Integer, server_default='0', nullable=False)  # Pontuação global
     bio = db.Column(db.Text, nullable=True)
     profile_picture = db.Column(db.String(255), nullable=False, server_default='default.jpg')
     is_admin = db.Column(db.Boolean, server_default='f', nullable=False)
@@ -39,24 +54,42 @@ class User(UserMixin, db.Model):
                                         lazy='subquery',
                                         backref=db.backref('completed_by_users', lazy=True))
 
+    ratings = db.relationship('CourseRating', backref='user', lazy='dynamic')
+
+    # --- RELACIONAMENTO MODIFICADO ---
+    # Agora usa o objeto de associação 'Enrollment'
+    enrollments = db.relationship('Enrollment', back_populates='user', lazy='dynamic', cascade="all, delete-orphan")
+
+    def is_enrolled(self, course):
+        return self.enrollments.filter_by(course_id=course.id).count() > 0
+
+    def enroll(self, course):
+        if not self.is_enrolled(course):
+            enrollment = Enrollment(user=self, course=course)
+            db.session.add(enrollment)
+
+    def unenroll(self, course):
+        enrollment = self.enrollments.filter_by(course_id=course.id).first()
+        if enrollment:
+            db.session.delete(enrollment)
+
+    # --- NOVO MÉTODO ---
+    def get_enrollment_for(self, course):
+        return self.enrollments.filter_by(course_id=course.id).first()
+
+    # ... (restante dos métodos de User sem alterações) ...
     def get_confirmation_token(self):
         s = Serializer(current_app.config['SECRET_KEY'])
         return s.dumps(self.id)
 
-    # --- MÉTODO MODIFICADO ---
-    # Agora é um método estático que retorna o usuário se o token for válido
     @staticmethod
     def verify_confirmation_token(token):
-        """ Verifica o token e retorna o usuário correspondente. """
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
-            # Token expira em 1 hora (3600 segundos)
             user_id = s.loads(token, max_age=3600)
         except (SignatureExpired, BadTimeSignature):
             return None
         return User.query.get(user_id)
-
-    # O método 'confirm_email' foi removido pois a lógica agora está na rota
 
     def get_reset_password_token(self):
         s = Serializer(current_app.config['SECRET_KEY'])
@@ -97,9 +130,7 @@ class User(UserMixin, db.Model):
         return self.username
 
 
-# ... (outros Models sem alterações) ...
 class Course(db.Model):
-    # ...
     __tablename__ = 'courses'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
@@ -107,6 +138,21 @@ class Course(db.Model):
     category = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     lessons = db.relationship('Lesson', back_populates='course', lazy=True, cascade="all, delete-orphan")
+    ratings = db.relationship('CourseRating', backref='course', lazy='dynamic')
+
+    # --- RELACIONAMENTO MODIFICADO ---
+    enrollments = db.relationship('Enrollment', back_populates='course', lazy='dynamic', cascade="all, delete-orphan")
+
+    # ... (métodos de Course sem alterações) ...
+    def average_rating(self):
+        avg = db.session.query(func.avg(CourseRating.stars)).filter(CourseRating.course_id == self.id).scalar()
+        return round(avg, 1) if avg else 0
+
+    def user_rating(self, user):
+        if not user.is_authenticated:
+            return None
+        rating = self.ratings.filter_by(user_id=user.id).first()
+        return rating.stars if rating else None
 
     def __repr__(self):
         return f'<Course {self.title}>'
@@ -115,6 +161,14 @@ class Course(db.Model):
         return self.title
 
 
+class CourseRating(db.Model):
+    __tablename__ = 'course_ratings'
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), primary_key=True)
+    stars = db.Column(db.Integer, nullable=False)
+
+
+# ... (outros Models sem alterações) ...
 class Lesson(db.Model):
     # ...
     __tablename__ = 'lessons'

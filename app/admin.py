@@ -1,10 +1,12 @@
-# plataforma_ead/app/admin.py (VERSÃO FINAL COM TODAS AS CORREÇÕES)
+# app/admin.py
 
 from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
 from flask import redirect, url_for
 from werkzeug.security import generate_password_hash
+# --- NOVA IMPORTAÇÃO ADICIONADA ---
+from flask_admin.menu import MenuLink
 
 from wtforms_sqlalchemy.fields import QuerySelectField
 from flask_wtf import FlaskForm
@@ -18,7 +20,7 @@ class MyAdminIndexView(AdminIndexView):
     @expose('/')
     def index(self):
         if not current_user.is_authenticated or not current_user.is_admin:
-            return redirect(url_for('main.pagina_principal'))
+            return redirect(url_for('main.dashboard'))
         return super(MyAdminIndexView, self).index()
 
 
@@ -27,7 +29,7 @@ class SecureModelView(ModelView):
         return current_user.is_authenticated and current_user.is_admin
 
     def inaccessible_callback(self, name, **kwargs):
-        return redirect(url_for('main.pagina_principal'))
+        return redirect(url_for('main.dashboard'))
 
 
 class UserAdminForm(FlaskForm):
@@ -48,12 +50,10 @@ class UserAdminView(SecureModelView):
             model.password_hash = generate_password_hash(form.password.data, method='pbkdf2:sha256')
 
 
-# --- CLASSE MODIFICADA ABAIXO ---
 class AnswerAdminView(SecureModelView):
     column_list = ['text', 'is_correct', 'question']
     form_columns = ['question', 'text', 'is_correct']
 
-    # Adiciona a configuração explícita para o campo de seleção 'question'
     form_overrides = {
         'question': QuerySelectField
     }
@@ -62,7 +62,6 @@ class AnswerAdminView(SecureModelView):
         'question': {
             'query_factory': lambda: Question.query.all(),
             'allow_blank': False,
-            # Usamos o __str__ do model Question, que já formata o texto
             'get_label': str
         }
     }
@@ -128,3 +127,7 @@ admin.add_view(LessonAdminView(Lesson, db.session, name='Aulas'))
 admin.add_view(QuizAdminView(Quiz, db.session, name='Simulados'))
 admin.add_view(QuestionAdminView(Question, db.session, name='Perguntas'))
 admin.add_view(AnswerAdminView(Answer, db.session, name='Respostas'))
+
+# --- NOVA LINHA ADICIONADA ---
+# Adiciona um link no menu do admin para voltar ao dashboard principal da aplicação.
+admin.add_link(MenuLink(name='Voltar ao Site', category='', endpoint='main.dashboard'))

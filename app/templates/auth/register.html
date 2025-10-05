@@ -12,6 +12,11 @@
         <div class="col-md-6 col-lg-4">
             <div class="card shadow-sm">
                 <div class="card-body">
+                     {# --- LINK ADICIONADO AQUI --- #}
+                    <div class="text-center mb-4">
+                        <a href="{{ url_for('main.landing_page') }}">← Voltar para a Página Principal</a>
+                    </div>
+
                     <h2 class="card-title text-center">Crie sua Conta</h2>
                     <hr>
                     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -38,6 +43,15 @@
                             <button type="submit" class="btn btn-primary">Cadastrar</button>
                         </div>
                     </form>
+
+                    {# --- NOVA SEÇÃO ADICIONADA --- #}
+                    <div class="text-center mt-4">
+                        <hr>
+                        <small class="text-muted">
+                            Já tem uma conta?
+                            <a href="{{ url_for('auth.pagina_login') }}">Faça o login</a>
+                        </small>
+                    </div>
                 </div>
             </div>
         </div>

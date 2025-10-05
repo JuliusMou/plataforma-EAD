@@ -2,10 +2,17 @@
 
 {% block title %}{{ aula.title }}{% endblock %}
 
+{# Remove a sidebar da direita para dar mais espaço para o conteúdo da aula #}
+{% block sidebar_config %}
+    {% set main_content_class = 'col-md-9' %}
+{% endblock %}
+{% block sidebar %}{% endblock %}
+
 {% block layout %}
 <div class="container-fluid pt-4">
     <div class="row">
 
+        {# Sidebar da Esquerda com a lista de aulas do curso #}
         <aside class="col-md-3">
             <div class="position-sticky" style="top: 2rem;">
                 <div class="p-4 mb-3 bg-light rounded">
@@ -24,7 +31,8 @@
             </div>
         </aside>
 
-        <main class="col-md-6">
+        {# Conteúdo Principal da Aula e do Simulado #}
+        <main class="col-md-9">
             <div class="pb-2 mb-3">
                  {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
@@ -47,24 +55,46 @@
 
             <hr>
 
+            {# --- SEÇÃO DO QUIZ IMPLEMENTADA --- #}
             {% if aula.quiz %}
-                <h2>{{ aula.quiz.title }}</h2>
-                <form action="{{ url_for('main.submit_quiz', quiz_id=aula.quiz.id) }}" method="POST">
-                    {# ... código do quiz ... #}
-                </form>
+                <div class="card my-4">
+                    <div class="card-header">
+                        <h3>Simulado: {{ aula.quiz.title }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('main.submit_quiz', quiz_id=aula.quiz.id) }}" method="POST">
+                            {% for pergunta in aula.quiz.questions %}
+                                <div class="mb-4">
+                                    <p><strong>{{ loop.index }}. {{ pergunta.text }}</strong></p>
+
+                                    {% for resposta in pergunta.answers %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio"
+                                                   name="pergunta_{{ pergunta.id }}"
+                                                   id="resposta_{{ resposta.id }}"
+                                                   value="{{ resposta.id }}" required>
+                                            <label class="form-check-label" for="resposta_{{ resposta.id }}">
+                                                {{ resposta.text }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                            <button type="submit" class="btn btn-primary">Enviar Respostas</button>
+                        </form>
+                    </div>
+                </div>
+
+            {# Se a aula não tem quiz, mostramos o botão de conclusão #}
             {% else %}
-                {# Se a aula não tem quiz, mostramos o botão de conclusão #}
                 {% if is_completed %}
-                    {# Se a variável is_completed for verdadeira, mostra o botão desabilitado #}
-                    <button class="btn btn-success" disabled>Concluído</button>
+                    <button class="btn btn-success" disabled>✔️ Concluído</button>
                 {% else %}
-                    {# Caso contrário, mostra o formulário com o botão para marcar como concluída #}
                     <form action="{{ url_for('main.concluir_aula', lesson_id=aula.id) }}" method="POST" class="d-inline">
                         <button type="submit" class="btn btn-primary">Marcar como Concluída</button>
                     </form>
                 {% endif %}
             {% endif %}
-
 
             <hr class="mt-5">
             <div class="d-flex justify-content-between">
@@ -84,15 +114,6 @@
                 </div>
             </div>
         </main>
-
-        {# A sidebar com o ranking e a lista de amigos já é herdada do base.html,
-           então a versão estática que estava aqui foi removida. #}
-        <aside class="col-md-3">
-            {% block sidebar %}
-                {{ super() }}
-            {% endblock sidebar %}
-        </aside>
-
     </div>
 </div>
 {% endblock layout %}

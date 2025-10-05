@@ -51,13 +51,18 @@ def pagina_login():
         user = User.query.filter_by(email=email).first()
 
         if user and check_password_hash(user.password_hash, password):
+            # --- LÓGICA APRIMORADA AQUI ---
             if not user.confirmed:
-                flash('Sua conta ainda não foi confirmada. Por favor, verifique seu e-mail.', 'warning')
+                # Reenvia o e-mail de confirmação automaticamente
+                send_confirmation_email(user)
+                # Atualiza a mensagem para ser mais clara
+                flash('Sua conta ainda não foi confirmada. Um novo e-mail de confirmação foi enviado para você.',
+                      'warning')
                 return redirect(url_for('auth.pagina_login'))
 
             login_user(user)
             next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('main.pagina_principal'))
+            return redirect(next_page or url_for('main.dashboard'))
         else:
             flash('Email ou senha inválidos. Por favor, tente novamente.', 'danger')
             return redirect(url_for('auth.pagina_login'))
@@ -73,15 +78,11 @@ def pagina_logout():
     return redirect(url_for('auth.pagina_login'))
 
 
-# --- ROTA DE CONFIRMAÇÃO CORRIGIDA ---
-# Removido o @login_required e lógica ajustada para usar o token.
 @auth.route('/confirm/<token>')
 def confirm_email(token):
-    # Primeiro, verificamos se o usuário já está logado e confirmado
     if current_user.is_authenticated and current_user.confirmed:
-        return redirect(url_for('main.pagina_principal'))
+        return redirect(url_for('main.dashboard'))
 
-    # Verificamos o token para encontrar o usuário
     user = User.verify_confirmation_token(token)
     if not user:
         flash('O link de confirmação é inválido ou expirou.', 'danger')
@@ -102,7 +103,7 @@ def confirm_email(token):
 def resend_confirmation():
     if current_user.confirmed:
         flash('Sua conta já está confirmada!', 'info')
-        return redirect(url_for('main.pagina_principal'))
+        return redirect(url_for('main.dashboard'))
 
     send_confirmation_email(current_user)
     flash('Um novo e-mail de confirmação foi enviado para sua caixa de entrada.', 'success')
@@ -130,7 +131,7 @@ def pagina_reset_password(token):
 
     form = ResetPasswordForm()
     if form.validate_on_submit():
-        password_hash = generate_password_hash(form.password.data, method='pbkdf2:sha266')
+        password_hash = generate_password_hash(form.password.data, method='pbkdf2:sha256')
         user.password_hash = password_hash
         db.session.commit()
         flash('Sua senha foi atualizada com sucesso!', 'success')
