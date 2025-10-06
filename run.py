@@ -90,5 +90,85 @@ def create_users_command():
         click.secho(f'\\nOcorreu um erro ao salvar: {e}', fg='red')
 
 
+@app.cli.command('create-courses')
+def create_courses_command():
+    """Cria 10 cursos de teste para a plataforma."""
+    cursos = [
+        {
+            'title': 'Fundamentos de Eletrotécnica',
+            'description': 'Aprenda os conceitos essenciais da eletricidade, desde a Lei de Ohm até circuitos básicos. Ideal para iniciantes.',
+            'category': 'Eletrotécnica'
+        },
+        {
+            'title': 'CLP Básico: Programação em Ladder',
+            'description': 'Introdução à programação de Controladores Lógicos Programáveis (CLPs) utilizando a linguagem Ladder. Inclui exemplos práticos e simulações.',
+            'category': 'Automação'
+        },
+        {
+            'title': 'Instalações Elétricas Prediais',
+            'description': 'Curso completo sobre como projetar e executar instalações elétricas seguras e eficientes em residências e pequenos comércios.',
+            'category': 'Eletrotécnica'
+        },
+        {
+            'title': 'Comandos Elétricos Industriais',
+            'description': 'Domine a lógica de contatores, relés e temporizadores para criar partidas de motores e outros automatismos industriais.',
+            'category': 'Automação'
+        },
+        {
+            'title': 'NR-10: Segurança em Eletricidade',
+            'description': 'Conheça as normas e procedimentos de segurança para trabalhos com eletricidade, visando a prevenção de acidentes.',
+            'category': 'Segurança'
+        },
+        {
+            'title': 'Inversores de Frequência e Soft-Starters',
+            'description': 'Aprenda a configurar e operar os principais dispositivos de acionamento de motores de indução para controle de velocidade e partidas suaves.',
+            'category': 'Automação'
+        },
+        {
+            'title': 'Eficiência Energética em Sistemas Elétricos',
+            'description': 'Descubra técnicas e boas práticas para reduzir o consumo de energia em instalações industriais e comerciais.',
+            'category': 'Eletrotécnica'
+        },
+        {
+            'title': 'Redes Industriais: Profibus e Modbus',
+            'description': 'Uma introdução aos principais protocolos de comunicação utilizados no chão de fábrica para conectar CLPs, sensores e atuadores.',
+            'category': 'Automação'
+        },
+        {
+            'title': 'Sistemas Fotovoltaicos: Projeto e Instalação',
+            'description': 'Curso prático para quem deseja entrar no mercado de energia solar, abordando desde o dimensionamento até a instalação de sistemas conectados à rede.',
+            'category': 'Energias Renováveis'
+        },
+        {
+            'title': 'Manutenção de Motores Elétricos',
+            'description': 'Aprenda a diagnosticar falhas, realizar testes e executar a manutenção preventiva e corretiva em motores elétricos trifásicos.',
+            'category': 'Eletrotécnica'
+        }
+    ]
+
+    click.echo('Iniciando a criação de cursos de teste...')
+    for curso_data in cursos:
+        existing_course = Course.query.filter_by(title=curso_data['title']).first()
+        if existing_course:
+            click.echo(f"Curso '{curso_data['title']}' já existe. Pulando.")
+            continue
+
+        novo_curso = Course(
+            title=curso_data['title'],
+            description=curso_data['description'],
+            category=curso_data['category']
+        )
+        db.session.add(novo_curso)
+        click.echo(f"Curso '{curso_data['title']}' preparado para ser adicionado.")
+
+    try:
+        db.session.commit()
+        click.secho('\\n*** SUCESSO! ***', fg='green', bold=True)
+        click.echo('Novos cursos foram salvos no banco de dados.')
+    except Exception as e:
+        db.session.rollback()
+        click.secho(f'\\nOcorreu um erro ao salvar: {e}', fg='red')
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
