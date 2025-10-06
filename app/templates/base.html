@@ -35,12 +35,7 @@
             --cor-borda: #444444;
         }
         /* 3. APLICAÇÃO GERAL DOS ESTILOS */
-        body {
-            background-color: var(--cor-fundo);
-            font-family: var(--fonte-principal);
-            color: var(--cor-texto);
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
+        body { background-color: var(--cor-fundo); font-family: var(--fonte-principal); color: var(--cor-texto); transition: background-color 0.3s ease, color 0.3s ease; }
         h1, h2, h3, h4, h5, h6, .display-5 { font-family: var(--fonte-titulos); color: var(--cor-headings); }
         .navbar { background-color: var(--cor-primaria) !important; border-bottom: 1px solid var(--cor-borda); }
         .btn-primary { background-color: var(--cor-primaria); border-color: var(--cor-primaria); transition: all 0.2s ease-in-out; }
@@ -53,19 +48,20 @@
         .dropdown-item:hover { background-color: var(--cor-primaria); color: white; }
         .online-indicator .profile-pic { border: 3px solid var(--cor-secundaria); box-shadow: 0 0 10px color-mix(in srgb, var(--cor-secundaria), transparent 50%); }
         .alert { border-left-width: 5px; }
-
         /* ESTILOS DO CHAT */
         #chat-container { position: fixed; bottom: 0; right: 20px; width: 350px; z-index: 1050; }
         #chat-header { cursor: pointer; background-color: var(--cor-primaria); color: white; }
         #chat-body { height: 300px; overflow-y: auto; background-color: var(--cor-fundo-card); border-left: 1px solid var(--cor-borda); border-right: 1px solid var(--cor-borda); }
-        .message { display: flex; align-items: flex-start; margin-bottom: 10px; }
-        .message img { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; margin-right: 10px; }
+        .message { display: flex; align-items: flex-start; margin-bottom: 10px; max-width: 95%; }
+        .message.ms-auto { justify-content: flex-end; } /* Alinha o container da mensagem à direita */
+        .message img { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; }
         .message-content { background-color: var(--cor-fundo); padding: 8px 12px; border-radius: 15px; max-width: 80%; }
         .message-content strong { display: block; font-size: 0.9em; color: var(--cor-secundaria); }
     </style>
 </head>
 <body>
 
+{# --- BLOCO NAVBAR RESTAURADO --- #}
 {% block navbar %}
 <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
@@ -106,13 +102,12 @@
 </nav>
 {% endblock navbar %}
 
-{# --- BLOCO DE LAYOUT RESTAURADO --- #}
+{# --- BLOCO LAYOUT RESTAURADO --- #}
 {% block layout %}
 <div class="container-fluid pt-4">
     <div class="row">
         {% set main_content_class = 'col-md-9' %}
         {% block sidebar_config %}{% endblock %}
-
         <main class="{{ main_content_class }} px-md-4">
             <div class="pb-2 mb-3">
                 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -128,7 +123,6 @@
             </div>
             {% block content %}{% endblock %}
         </main>
-
         {% if main_content_class != 'col-md-12' %}
             <aside class="col-md-3">
                 {% block sidebar %}
@@ -151,16 +145,13 @@
                             {% if friends_list %}
                                 <div class="d-flex flex-wrap">
                                 {% for friend in friends_list %}
-                                    <a href="{{ url_for('main.pagina_perfil', username=friend.username) }}" title="{{ friend.username }}"
-                                       class="{% if friend.is_online() %}online-indicator{% endif %}">
-                                        <img src="{{ url_for('static', filename='profile_pics/' + friend.profile_picture) }}"
-                                             class="rounded-circle m-1 profile-pic" alt="{{ friend.username }}"
-                                             style="width: 50px; height: 50px; object-fit: cover;">
+                                    <a href="{{ url_for('main.pagina_perfil', username=friend.username) }}" title="{{ friend.username }}" class="{% if friend.is_online() %}online-indicator{% endif %}">
+                                        <img src="{{ url_for('static', filename='profile_pics/' + friend.profile_picture) }}" class="rounded-circle m-1 profile-pic" alt="{{ friend.username }}" style="width: 50px; height: 50px; object-fit: cover;">
                                     </a>
                                 {% endfor %}
                                 </div>
                             {% else %}
-                                <p class="text-muted small">Você ainda não tem amigos. Adicione alguém da página Comunidade!</p>
+                                <p class="text-muted small">Você ainda não tem amigos.</p>
                             {% endif %}
                         </div>
                     </div>
@@ -178,10 +169,10 @@
 {% if current_user.is_authenticated %}
 <div id="chat-container">
     <div id="chat-header" class="p-3 rounded-top d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Chat Global</h5>
+        <h5 class="mb-0" id="chat-title">Chat Global</h5>
         <span id="online-users-count" class="badge bg-light text-dark">0 online</span>
     </div>
-    <div id="chat-content" class="collapse show">
+    <div id="chat-content" class="collapse">
         <div id="chat-body" class="p-3"></div>
         <div class="card-footer">
             <form id="chat-form">
@@ -195,88 +186,89 @@
 </div>
 {% endif %}
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
 <script>
-    (() => {
-        'use strict'
-        const getStoredTheme = () => localStorage.getItem('theme')
-        const setStoredTheme = theme => localStorage.setItem('theme', theme)
-        const getPreferredTheme = () => {
-            const storedTheme = getStoredTheme()
-            if (storedTheme) { return storedTheme }
-            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-        }
-        const setTheme = theme => {
-            document.documentElement.setAttribute('data-bs-theme', theme)
-            const toggler = document.getElementById('theme-toggler');
-            if (toggler) {
-                const icon = toggler.querySelector('i');
-                if (theme === 'dark') {
-                    icon.classList.remove('bi-moon-stars-fill');
-                    icon.classList.add('bi-sun-fill');
-                    toggler.innerHTML = icon.outerHTML + ' Mudar para Tema Claro';
-                } else {
-                    icon.classList.remove('bi-sun-fill');
-                    icon.classList.add('bi-moon-stars-fill');
-                    toggler.innerHTML = icon.outerHTML + ' Mudar para Tema Escuro';
-                }
-            }
-        }
-        setTheme(getPreferredTheme())
-        const themeToggler = document.getElementById('theme-toggler');
-        if(themeToggler) {
-            themeToggler.addEventListener('click', (e) => {
-                e.preventDefault();
-                const currentTheme = document.documentElement.getAttribute('data-bs-theme');
-                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-                setStoredTheme(newTheme);
-                setTheme(newTheme);
-            });
-        }
-    })();
+    // Theme Toggler
+    (() => { 'use strict'; const getStoredTheme=()=>localStorage.getItem('theme'); const setStoredTheme=theme=>localStorage.setItem('theme',theme); const getPreferredTheme=()=>{ const storedTheme=getStoredTheme(); if(storedTheme){ return storedTheme } return window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light' }; const setTheme=theme=>{ document.documentElement.setAttribute('data-bs-theme',theme); const toggler=document.getElementById('theme-toggler'); if(toggler){ const icon=toggler.querySelector('i'); if(theme==='dark'){ icon.classList.remove('bi-moon-stars-fill'); icon.classList.add('bi-sun-fill'); toggler.innerHTML=icon.outerHTML+' Mudar para Tema Claro' }else{ icon.classList.remove('bi-sun-fill'); icon.classList.add('bi-moon-stars-fill'); toggler.innerHTML=icon.outerHTML+' Mudar para Tema Escuro' } } }; setTheme(getPreferredTheme()); const themeToggler=document.getElementById('theme-toggler'); if(themeToggler){ themeToggler.addEventListener('click',e=>{ e.preventDefault(); const currentTheme=document.documentElement.getAttribute('data-bs-theme'); const newTheme=currentTheme==='light'?'dark':'light'; setStoredTheme(newTheme); setTheme(newTheme) }) } })();
 
     {% if current_user.is_authenticated %}
     document.addEventListener('DOMContentLoaded', () => {
         const socket = io();
+        let chatState = { mode: 'global', recipient: null, room: null };
         const chatHeader = document.getElementById('chat-header');
         const chatContent = document.getElementById('chat-content');
         const chatBody = document.getElementById('chat-body');
         const chatForm = document.getElementById('chat-form');
         const messageInput = document.getElementById('message-input');
         const onlineUsersCount = document.getElementById('online-users-count');
+        const chatTitle = document.getElementById('chat-title');
         const bsChatContent = new bootstrap.Collapse(chatContent, { toggle: false });
 
-        chatHeader.addEventListener('click', () => { bsChatContent.toggle(); });
-
-        chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const message = messageInput.value.trim();
-            if (message) {
-                socket.emit('new_message', { 'message': message });
-                messageInput.value = '';
-            }
-        });
-
-        socket.on('chat_message', (data) => {
+        function addMessageToChat(data) {
             const messageElement = document.createElement('div');
             messageElement.classList.add('message');
+            if (data.username === '{{ current_user.username }}') { messageElement.classList.add('ms-auto'); }
             const profilePicUrl = `{{ url_for('static', filename='profile_pics/') }}${data.profile_picture}`;
             messageElement.innerHTML = `
-                <img src="${profilePicUrl}" alt="${data.username}">
-                <div class="message-content">
+                <img src="${profilePicUrl}" alt="${data.username}" class="${data.username === '{{ current_user.username }}' ? 'order-2 ms-2' : 'order-1 me-2'}">
+                <div class="message-content ${data.username === '{{ current_user.username }}' ? 'order-1' : 'order-2'}">
                     <strong>${data.username}</strong>
                     <span>${data.text}</span>
                 </div>
             `;
             chatBody.appendChild(messageElement);
             chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        // Adiciona listener ao corpo do documento para pegar cliques no botão, já que ele pode não existir no carregamento inicial
+        document.body.addEventListener('click', function(event) {
+            if (event.target && event.target.id === 'start-private-chat') {
+                const recipientUsername = event.target.dataset.recipient;
+                chatState.mode = 'private';
+                chatState.recipient = recipientUsername;
+                chatTitle.innerHTML = `Conversa com ${recipientUsername} <button id="back-to-global" class="btn btn-sm btn-outline-light ms-2">Voltar</button>`;
+                chatBody.innerHTML = '';
+                socket.emit('join_private_chat', { 'recipient_username': recipientUsername });
+                bsChatContent.show();
+            }
+            if (event.target && event.target.id === 'back-to-global') {
+                 event.stopPropagation();
+                 chatState.mode = 'global';
+                 chatState.recipient = null;
+                 chatState.room = null;
+                 chatTitle.textContent = 'Chat Global';
+                 chatBody.innerHTML = '<p class="text-muted text-center small">Bem-vindo ao Chat Global!</p>';
+            }
         });
 
-        socket.on('update_online_users', (users) => {
-            onlineUsersCount.textContent = `${users.length} online`;
+        chatHeader.addEventListener('click', () => { bsChatContent.toggle(); });
+
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (!message) return;
+            if (chatState.mode === 'private') {
+                socket.emit('private_message', { 'message': message, 'recipient_username': chatState.recipient });
+            } else {
+                socket.emit('new_message', { 'message': message });
+            }
+            messageInput.value = '';
         });
+
+        socket.on('chat_message', addMessageToChat);
+        socket.on('new_private_message', addMessageToChat);
+        socket.on('private_message_history', (data) => {
+            chatState.room = data.room;
+            chatBody.innerHTML = '';
+            if (data.history.length === 0) {
+                chatBody.innerHTML = '<p class="text-muted text-center small">Nenhuma mensagem ainda. Diga oi!</p>';
+            } else {
+                data.history.forEach(addMessageToChat);
+            }
+        });
+        socket.on('update_online_users', (users) => { onlineUsersCount.textContent = `${users.length} online`; });
     });
     {% endif %}
 </script>

@@ -16,7 +16,7 @@
     <p><strong>Pontuação:</strong> {{ user.score }}</p>
 
     {% if current_user != user %}
-        <div class="mt-4">
+        <div class="mt-4 d-flex align-items-center">
             {% if friendship_status == 'not_friends' %}
                 <form action="{{ url_for('main.adicionar_amigo', username=user.username) }}" method="POST">
                     <button type="submit" class="btn btn-success">Adicionar Amigo</button>
@@ -35,6 +35,10 @@
                 {% endfor %}
             {% elif friendship_status == 'friends' %}
                 <button class="btn btn-info" disabled>✔️ Amigos</button>
+                {# --- NOVO BOTÃO DE MENSAGEM --- #}
+                <button class="btn btn-primary ms-2" id="start-private-chat" data-recipient="{{ user.username }}">
+                    Enviar Mensagem
+                </button>
             {% endif %}
         </div>
     {% endif %}
