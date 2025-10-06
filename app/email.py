@@ -3,13 +3,29 @@
 from flask_mail import Message
 from flask import render_template, current_app
 from . import mail
-from threading import Thread  # Importa a classe Thread
+from threading import Thread
+# --- NOVA IMPORTAÇÃO ---
+# Adicionamos o módulo de logging do Python
+import logging
+
+# --- CONFIGURAÇÃO BÁSICA DO LOGGING ---
+# Isso fará com que as mensagens de log apareçam no seu console
+logging.basicConfig(level=logging.INFO)
 
 
 def send_async_email(app, msg):
     """ Função que será executada em uma thread separada para enviar o e-mail. """
     with app.app_context():
-        mail.send(msg)
+        try:
+            # --- LOG ADICIONADO ---
+            logging.info(f"Tentando enviar e-mail para: {msg.recipients}")
+            mail.send(msg)
+            # --- LOG ADICIONADO ---
+            logging.info(f"E-mail para {msg.recipients} enviado com sucesso!")
+        except Exception as e:
+            # --- LOG DE ERRO ADICIONADO ---
+            # Se algo der errado, isso irá imprimir a exceção no console
+            logging.error(f"Falha ao enviar e-mail para {msg.recipients}: {e}")
 
 
 def send_email_wrapper(subject, sender, recipients, text_body, html_body):
@@ -21,6 +37,8 @@ def send_email_wrapper(subject, sender, recipients, text_body, html_body):
     # Obtém a app atual para passar para a thread
     app = current_app._get_current_object()
 
+    # --- LOG ADICIONADO ---
+    logging.info(f"Disparando thread de envio de e-mail para: {recipients}")
     # Cria e inicia a thread
     Thread(target=send_async_email, args=(app, msg)).start()
 
@@ -30,6 +48,8 @@ def send_password_reset_email(user):
     token = user.get_reset_password_token()
     app = current_app._get_current_object()  # Precisamos da app para renderizar o template
 
+    # --- LOG ADICIONADO ---
+    logging.info(f"Preparando e-mail de redefinição de senha para o usuário: {user.email}")
     send_email_wrapper(
         subject='Redefinição de Senha - Plataforma EAD',
         sender=app.config['MAIL_DEFAULT_SENDER'],
@@ -44,6 +64,8 @@ def send_confirmation_email(user):
     token = user.get_confirmation_token()
     app = current_app._get_current_object()  # Precisamos da app para renderizar o template
 
+    # --- LOG ADICIONADO ---
+    logging.info(f"Preparando e-mail de confirmação para o usuário: {user.email}")
     send_email_wrapper(
         subject='Confirme sua Conta - Plataforma EAD',
         sender=app.config['MAIL_DEFAULT_SENDER'],
