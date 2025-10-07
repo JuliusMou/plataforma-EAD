@@ -1,16 +1,17 @@
 # app/events.py
 
 from flask import request
-from flask_socketio import emit, join_room, leave_room
-from flask_login import current_user
+# A função 'emit' é importada diretamente para uso correto
+from flask_socketio import emit, join_room
 from sqlalchemy import or_
 
+# 'socketio' é usado para decorar os handlers, 'emit' é usado para enviar mensagens
 from . import socketio, db
 from .models import User, PrivateMessage
 
-
 # Dicionário para rastrear usuários online e seus session IDs
 online_users = {}
+
 
 def get_private_room_name(user1_id, user2_id):
     """Gera um nome de sala consistente para dois usuários, garantindo a ordem dos IDs."""
@@ -20,22 +21,37 @@ def get_private_room_name(user1_id, user2_id):
 @socketio.on('connect')
 def handle_connect():
     """Lida com a conexão de um novo cliente."""
+    # current_user é confiável aqui porque a conexão acontece em um contexto de requisição
     if current_user.is_authenticated:
         online_users[current_user.username] = request.sid
         emit('update_online_users', list(online_users.keys()), broadcast=True)
         print(f'Cliente conectado: {current_user.username} com sid: {request.sid}')
 
 
+# --- FUNÇÃO 'disconnect' TOTALMENTE CORRIGIDA ---
 @socketio.on('disconnect')
 def handle_disconnect():
-    """Lida com a desconexão de um cliente."""
-    if current_user.is_authenticated and current_user.username in online_users:
-        # Garante que o usuário ainda está no dicionário antes de tentar remover
-        del online_users[current_user.username]
-        # Avisa a todos que o usuário saiu (incluindo o indicador de "digitando")
-        socketio.emit('user_typing_stop', {'username': current_user.username}, broadcast=True)
+    """
+    Lida com a desconexão de um cliente de forma robusta.
+    """
+    # Procura pelo username associado ao ID da sessão que está se desconectando
+    disconnected_user = None
+    for username, sid in list(online_users.items()):
+        if sid == request.sid:
+            disconnected_user = username
+            break
+
+    if disconnected_user:
+        # Remove o usuário da nossa lista de rastreamento
+        del online_users[disconnected_user]
+
+        # Avisa a todos que o usuário parou de digitar (caso estivesse)
+        emit('user_typing_stop', {'username': disconnected_user}, broadcast=True)
+
+        # Envia a lista atualizada de usuários online para todos
         emit('update_online_users', list(online_users.keys()), broadcast=True)
-        print(f'Cliente desconectado: {current_user.username}')
+
+        print(f'Cliente desconectado: {disconnected_user}')
 
 
 @socketio.on('join_private_chat')
@@ -50,7 +66,6 @@ def join_private_chat(data):
     room = get_private_room_name(current_user.id, recipient.id)
     join_room(room)
 
-    # Busca o histórico de mensagens entre os dois usuários
     history = PrivateMessage.query.filter(
         or_(
             (PrivateMessage.sender_id == current_user.id) & (PrivateMessage.recipient_id == recipient.id),
@@ -58,7 +73,6 @@ def join_private_chat(data):
         )
     ).order_by(PrivateMessage.timestamp.asc()).all()
 
-    # Formata o histórico para envio ao cliente
     message_history = [
         {
             'username': msg.sender.username,
@@ -82,7 +96,6 @@ def handle_private_message(data):
     if not recipient or not current_user.is_authenticated:
         return
 
-    # Salva a mensagem no banco de dados
     new_message = PrivateMessage(
         sender_id=current_user.id,
         recipient_id=recipient.id,
@@ -99,37 +112,18 @@ def handle_private_message(data):
     }
 
     room = get_private_room_name(current_user.id, recipient.id)
-
-    # Garante que o remetente está na sala
     join_room(room)
 
-    # Adiciona o destinatário à sala se ele estiver online
     if recipient.username in online_users:
         recipient_sid = online_users[recipient.username]
         join_room(room, sid=recipient_sid)
 
-    # Envia a mensagem para a sala (ambos os usuários)
     emit('new_private_message', message_payload, to=room)
 
 
-@socketio.on('new_message')
-def handle_new_message(data):
-    """Lida com o recebimento de uma nova mensagem no chat global."""
-    if current_user.is_authenticated:
-        message_payload = {
-            'username': current_user.username,
-            'profile_picture': current_user.profile_picture,
-            'text': data['message']
-        }
-        emit('chat_message', message_payload, broadcast=True)
-
-
-# --- NOVO EVENTO: INÍCIO DA DIGITAÇÃO ---
 @socketio.on('typing_start')
 def handle_typing_start(data):
-    """
-    Avisa aos outros usuários que o usuário atual começou a digitar.
-    """
+    """Avisa aos outros usuários que o usuário atual começou a digitar."""
     if not current_user.is_authenticated:
         return
 
@@ -137,19 +131,12 @@ def handle_typing_start(data):
     payload = {'username': current_user.username}
 
     if room:
-        # Se estiver em uma sala privada, emite apenas para essa sala
         emit('user_typing_start', payload, to=room, include_self=False)
-    else:
-        # Se for no chat global, emite para todos
-        emit('user_typing_start', payload, broadcast=True, include_self=False)
 
 
-# --- NOVO EVENTO: FIM DA DIGITAÇÃO ---
 @socketio.on('typing_stop')
 def handle_typing_stop(data):
-    """
-    Avisa aos outros usuários que o usuário atual parou de digitar.
-    """
+    """Avisa aos outros usuários que o usuário atual parou de digitar."""
     if not current_user.is_authenticated:
         return
 
@@ -158,5 +145,3 @@ def handle_typing_stop(data):
 
     if room:
         emit('user_typing_stop', payload, to=room, include_self=False)
-    else:
-        emit('user_typing_stop', payload, broadcast=True, include_self=False)
