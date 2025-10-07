@@ -4,11 +4,11 @@ import markdown
 from datetime import datetime, timedelta
 from . import main
 from flask_login import login_required, current_user
-from flask import render_template, flash, redirect, url_for, request
-from app.models import User, Course, Lesson, Question, Answer, Quiz, Friendship, CourseRating, Enrollment
+from flask import render_template, flash, redirect, url_for, request, jsonify
+from app.models import User, Course, Lesson, Question, Answer, Quiz, Friendship, CourseRating, Enrollment, PrivateMessage
 from app import db
 from .forms import EditProfileForm
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 
 
 @main.before_app_request
@@ -21,6 +21,27 @@ def before_request():
                 and request.endpoint != 'static':
             flash('Por favor, confirme sua conta para acessar esta página.', 'warning')
             return redirect(url_for('auth.resend_confirmation'))
+
+
+# --- NOVO CONTEXT PROCESSOR PARA NOTIFICAÇÕES ---
+@main.app_context_processor
+def inject_unread_counts():
+    """Injeta a contagem de mensagens não lidas em todos os templates."""
+    if current_user.is_authenticated:
+        # Conta mensagens não lidas por remetente
+        unread_counts = db.session.query(
+            User.username, func.count(PrivateMessage.id)
+        ).join(
+            PrivateMessage, User.id == PrivateMessage.sender_id
+        ).filter(
+            PrivateMessage.recipient_id == current_user.id,
+            PrivateMessage.read == False
+        ).group_by(User.username).all()
+        
+        # Converte a lista de tuplas em um dicionário para fácil acesso no JS/Jinja
+        unread_dict = {username: count for username, count in unread_counts}
+        return dict(unread_counts=unread_dict)
+    return dict(unread_counts={})
 
 
 @main.route('/')
@@ -268,9 +289,7 @@ def submit_quiz(quiz_id):
     flash(
         f'Você acertou {respostas_corretas} de {total_perguntas} perguntas e ganhou {pontos_ganhos} pontos neste curso!',
         'success')
-
-    # --- LINHA CORRIGIDA ---
-    # O parêntese de fechamento e o argumento 'lesson_id' foram adicionados.
+        
     return redirect(url_for('main.pagina_aula', course_id=quiz.lesson.course.id, lesson_id=quiz.lesson.id))
 
 

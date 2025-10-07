@@ -12,38 +12,39 @@
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
 
     <style>
-        /* (Estilos CSS permanecem os mesmos, omitidos para brevidade) */
+        /* (Estilos CSS principais omitidos para brevidade) */
         [data-bs-theme="light"] { --cor-primaria: #005f73; --cor-secundaria: #0a9396; --cor-fundo: #f8f9fa; --cor-fundo-card: #ffffff; --cor-texto: #212529; --cor-headings: #003440; --cor-borda: #dee2e6; --fonte-principal: 'Montserrat', sans-serif; --fonte-titulos: 'Merriweather', serif; }
         [data-bs-theme="dark"] { --cor-primaria: #0a9396; --cor-secundaria: #94d2bd; --cor-fundo: #121212; --cor-fundo-card: #1e1e1e; --cor-texto: #e0e0e0; --cor-headings: #eef4f5; --cor-borda: #444444; }
-        body { background-color: var(--cor-fundo); font-family: var(--fonte-principal); color: var(--cor-texto); transition: background-color 0.3s ease, color 0.3s ease; }
+        body { background-color: var(--cor-fundo); font-family: var(--fonte-principal); color: var(--cor-texto); }
         h1, h2, h3, h4, h5, h6, .display-5 { font-family: var(--fonte-titulos); color: var(--cor-headings); }
-        .navbar { background-color: var(--cor-primaria) !important; border-bottom: 1px solid var(--cor-borda); }
-        .btn-primary { background-color: var(--cor-primaria); border-color: var(--cor-primaria); transition: all 0.2s ease-in-out; }
-        .btn-primary:hover { background-color: var(--cor-secundaria); border-color: var(--cor-secundaria); transform: translateY(-2px); }
-        .card { background-color: var(--cor-fundo-card); border: 1px solid var(--cor-borda); border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s ease-in-out; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-        [data-bs-theme="dark"] .card:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
-        .dropdown-menu { background-color: var(--cor-fundo-card); border: 1px solid var(--cor-borda); }
-        .dropdown-item { color: var(--cor-texto); }
-        .dropdown-item:hover { background-color: var(--cor-primaria); color: white; }
-        .online-indicator .profile-pic { border: 3px solid var(--cor-secundaria); box-shadow: 0 0 10px color-mix(in srgb, var(--cor-secundaria), transparent 50%); }
-        .alert { border-left-width: 5px; }
+        .navbar { background-color: var(--cor-primaria) !important; }
+        .btn-primary { background-color: var(--cor-primaria); border-color: var(--cor-primaria); }
+        .btn-primary:hover { background-color: var(--cor-secundaria); border-color: var(--cor-secundaria); }
+        .card { background-color: var(--cor-fundo-card); border: 1px solid var(--cor-borda); }
+        .online-indicator .profile-pic { border: 3px solid var(--cor-secundaria); }
         #chat-container { position: fixed; bottom: 0; right: 20px; width: 350px; z-index: 1050; }
         #chat-header { cursor: pointer; background-color: var(--cor-primaria); color: white; }
-        #chat-body { height: 300px; overflow-y: auto; background-color: var(--cor-fundo-card); border-left: 1px solid var(--cor-borda); border-right: 1px solid var(--cor-borda); }
+        #chat-body { height: 300px; overflow-y: auto; background-color: var(--cor-fundo-card); }
         .message { display: flex; align-items: flex-start; margin-bottom: 10px; max-width: 95%; }
         .message.ms-auto { justify-content: flex-end; }
         .message img { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; }
         .message-content { background-color: var(--cor-fundo); padding: 8px 12px; border-radius: 15px; max-width: 80%; }
         .message-content strong { display: block; font-size: 0.9em; color: var(--cor-secundaria); }
-        /* --- NOVO ESTILO PARA O INDICADOR --- */
-        #typing-indicator { height: 25px; /* Altura fixa para não 'pular' a interface */ }
+        #typing-indicator { height: 25px; }
+        /* --- NOVO ESTILO PARA A "BOLINHA" DE NOTIFICAÇÃO --- */
+        .notification-dot {
+            height: 10px;
+            width: 10px;
+            background-color: #dc3545; /* Vermelho do Bootstrap */
+            border-radius: 50%;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
 
+{# (Blocos Navbar e Layout permanecem os mesmos) #}
 {% block navbar %}
-{# (Bloco Navbar permanece o mesmo, omitido para brevidade) #}
 <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
         <a class="navbar-brand" href="{{ url_for('main.dashboard') if current_user.is_authenticated else url_for('main.landing_page') }}">Plataforma EAD</a>
@@ -84,7 +85,6 @@
 {% endblock navbar %}
 
 {% block layout %}
-{# (Bloco Layout permanece o mesmo, omitido para brevidade) #}
 <div class="container-fluid pt-4">
     <div class="row">
         {% set main_content_class = 'col-md-9' %}
@@ -149,21 +149,27 @@
 
 {% if current_user.is_authenticated %}
 <div id="chat-container">
-    <div id="chat-header" class="p-3 rounded-top d-flex justify-content-between align-items-center">
-        <h5 class="mb-0" id="chat-title">Chat Global</h5>
+    <div id="chat-header" class="p-3 rounded-top d-flex justify-content-between align-items-center position-relative">
+        <h5 class="mb-0" id="chat-title">Conversas</h5>
+        {# --- INDICADOR PRINCIPAL DE NOTIFICAÇÃO --- #}
+        <span id="main-notification-dot" class="notification-dot position-absolute top-0 start-0 translate-middle" style="display: none;"></span>
         <span id="online-users-count" class="badge bg-light text-dark">0 online</span>
     </div>
     <div id="chat-content" class="collapse">
-        <div id="chat-body" class="p-3"></div>
-        {# --- NOVO ELEMENTO ADICIONADO AQUI --- #}
-        <div id="typing-indicator" class="px-3 pb-2 text-muted small"></div>
-        <div class="card-footer">
-            <form id="chat-form">
-                <div class="input-group">
-                    <input type="text" id="message-input" class="form-control" placeholder="Digite sua mensagem..." autocomplete="off" required>
-                    <button class="btn btn-primary" type="submit">Enviar</button>
-                </div>
-            </form>
+        <div id="friends-list-view">
+            <div class="list-group list-group-flush" id="chat-friends-list" style="height: 350px; overflow-y: auto;"></div>
+        </div>
+        <div id="private-chat-view" style="display: none;">
+            <div id="chat-body" class="p-3"></div>
+            <div id="typing-indicator" class="px-3 pb-2 text-muted small"></div>
+            <div class="card-footer">
+                <form id="chat-form">
+                    <div class="input-group">
+                        <input type="text" id="message-input" class="form-control" placeholder="Digite sua mensagem..." autocomplete="off" required>
+                        <button class="btn btn-primary" type="submit">Enviar</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -173,52 +179,119 @@
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
 <script>
-    // Theme Toggler
+    // Theme Toggler (sem alterações)
     (() => { 'use strict'; const getStoredTheme=()=>localStorage.getItem('theme'); const setStoredTheme=theme=>localStorage.setItem('theme',theme); const getPreferredTheme=()=>{ const storedTheme=getStoredTheme(); if(storedTheme){ return storedTheme } return window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light' }; const setTheme=theme=>{ document.documentElement.setAttribute('data-bs-theme',theme); const toggler=document.getElementById('theme-toggler'); if(toggler){ const icon=toggler.querySelector('i'); if(theme==='dark'){ icon.classList.remove('bi-moon-stars-fill'); icon.classList.add('bi-sun-fill'); toggler.innerHTML=icon.outerHTML+' Mudar para Tema Claro' }else{ icon.classList.remove('bi-sun-fill'); icon.classList.add('bi-moon-stars-fill'); toggler.innerHTML=icon.outerHTML+' Mudar para Tema Escuro' } } }; setTheme(getPreferredTheme()); const themeToggler=document.getElementById('theme-toggler'); if(themeToggler){ themeToggler.addEventListener('click',e=>{ e.preventDefault(); const currentTheme=document.documentElement.getAttribute('data-bs-theme'); const newTheme=currentTheme==='light'?'dark':'light'; setStoredTheme(newTheme); setTheme(newTheme) }) } })();
 
     {% if current_user.is_authenticated %}
     document.addEventListener('DOMContentLoaded', () => {
-        // --- INÍCIO DAS VARIÁVEIS DO CHAT ---
         const socket = io();
-        let chatState = { mode: 'global', recipient: null, room: null };
+        let chatState = { recipient: null, room: null };
         const chatHeader = document.getElementById('chat-header');
         const chatContent = document.getElementById('chat-content');
+        const chatTitle = document.getElementById('chat-title');
+        const bsChatContent = new bootstrap.Collapse(chatContent, { toggle: false });
+        const friendsListView = document.getElementById('friends-list-view');
+        const privateChatView = document.getElementById('private-chat-view');
+        const chatFriendsList = document.getElementById('chat-friends-list');
         const chatBody = document.getElementById('chat-body');
         const chatForm = document.getElementById('chat-form');
         const messageInput = document.getElementById('message-input');
-        const onlineUsersCount = document.getElementById('online-users-count');
-        const chatTitle = document.getElementById('chat-title');
-        const bsChatContent = new bootstrap.Collapse(chatContent, { toggle: false });
-
-        // --- NOVO: Variáveis do Indicador de Digitação ---
         const typingIndicator = document.getElementById('typing-indicator');
-        let typingTimer; // Timer para controlar quando o usuário parou de digitar
-        const doneTypingInterval = 1500; // Tempo em ms (1.5 segundos)
-        let usersTyping = {}; // Objeto para rastrear quem está digitando
+        let typingTimer;
+        const doneTypingInterval = 1500;
+        let usersTyping = {};
+        let onlineUsersList = [];
+        const friendsData = [
+            {% for friend in friends_list %}{ username: "{{ friend.username }}", profile_picture: "{{ friend.profile_picture }}" },{% endfor %}
+        ];
+        
+        // --- NOVO: Variáveis e Dados de Notificação ---
+        const mainNotificationDot = document.getElementById('main-notification-dot');
+        // Os dados de 'unread_counts' são injetados pelo context processor do Flask
+        let unreadFrom = {{ unread_counts | tojson }};
 
-        // --- FUNÇÕES DO CHAT ---
+        // --- FUNÇÕES DE UI (INTERFACE DO USUÁRIO) ---
+
+        function updateMainNotificationDot() {
+            // Mostra o indicador principal se houver qualquer conversa com mensagens não lidas
+            if (Object.keys(unreadFrom).length > 0) {
+                mainNotificationDot.style.display = 'block';
+            } else {
+                mainNotificationDot.style.display = 'none';
+            }
+        }
+
+        function showFriendsList() {
+            privateChatView.style.display = 'none';
+            friendsListView.style.display = 'block';
+            chatTitle.innerHTML = 'Conversas';
+            chatState = { recipient: null, room: null };
+            populateFriendsList();
+        }
+
+        function showPrivateChat(recipientUsername) {
+            friendsListView.style.display = 'none';
+            privateChatView.style.display = 'block';
+            chatTitle.innerHTML = `<button id="back-to-friends" class="btn btn-sm btn-outline-light me-2">←</button> Conversa com ${recipientUsername}`;
+            document.getElementById('back-to-friends').addEventListener('click', showFriendsList);
+
+            // --- NOVA LÓGICA: Limpa notificação ao abrir o chat ---
+            if (unreadFrom[recipientUsername]) {
+                delete unreadFrom[recipientUsername];
+                updateMainNotificationDot();
+                // Emite evento para o servidor marcar como lido no BD
+                socket.emit('mark_messages_as_read', {'sender_username': recipientUsername});
+            }
+        }
+        
+        function populateFriendsList() {
+            chatFriendsList.innerHTML = '';
+            if (friendsData.length === 0) {
+                chatFriendsList.innerHTML = '<p class="text-center text-muted p-3">Adicione amigos para começar a conversar.</p>';
+                return;
+            }
+            friendsData.forEach(friend => {
+                const isOnline = onlineUsersList.includes(friend.username);
+                const hasUnread = unreadFrom[friend.username] > 0;
+
+                const friendElement = document.createElement('a');
+                friendElement.href = '#';
+                friendElement.classList.add('list-group-item', 'list-group-item-action', 'd-flex', 'align-items-center');
+                friendElement.dataset.username = friend.username;
+
+                const profilePicUrl = `{{ url_for('static', filename='profile_pics/') }}${friend.profile_picture}`;
+                // --- LÓGICA ATUALIZADA para mostrar o indicador ---
+                friendElement.innerHTML = `
+                    <img src="${profilePicUrl}" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                    <strong class="flex-grow-1">${friend.username}</strong>
+                    ${hasUnread ? '<span class="notification-dot me-2"></span>' : ''}
+                    <span class="badge rounded-pill ${isOnline ? 'bg-success' : 'bg-secondary'}">${isOnline ? 'Online' : 'Offline'}</span>
+                `;
+                
+                friendElement.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const recipientUsername = e.currentTarget.dataset.username;
+                    chatState.recipient = recipientUsername;
+                    showPrivateChat(recipientUsername);
+                    chatBody.innerHTML = '';
+                    socket.emit('join_private_chat', { 'recipient_username': recipientUsername });
+                });
+                chatFriendsList.appendChild(friendElement);
+            });
+        }
+
         function addMessageToChat(data) {
-            // (Esta função permanece a mesma)
             const messageElement = document.createElement('div');
             messageElement.classList.add('message');
             if (data.username === '{{ current_user.username }}') { messageElement.classList.add('ms-auto'); }
             const profilePicUrl = `{{ url_for('static', filename='profile_pics/') }}${data.profile_picture}`;
-            messageElement.innerHTML = `
-                <img src="${profilePicUrl}" alt="${data.username}" class="${data.username === '{{ current_user.username }}' ? 'order-2 ms-2' : 'order-1 me-2'}">
-                <div class="message-content ${data.username === '{{ current_user.username }}' ? 'order-1' : 'order-2'}">
-                    <strong>${data.username}</strong>
-                    <span>${data.text}</span>
-                </div>
-            `;
+            messageElement.innerHTML = `<img src="${profilePicUrl}" alt="${data.username}" class="${data.username === '{{ current_user.username }}' ? 'order-2 ms-2' : 'order-1 me-2'}"><div class="message-content ${data.username === '{{ current_user.username }}' ? 'order-1' : 'order-2'}"><strong>${data.username}</strong><span>${data.text}</span></div>`;
             chatBody.appendChild(messageElement);
             chatBody.scrollTop = chatBody.scrollHeight;
         }
 
-        // --- NOVO: Função para atualizar o indicador ---
         function updateTypingIndicator() {
-            // Filtra para remover o próprio usuário da lista
             const typingUsernames = Object.keys(usersTyping).filter(u => u !== '{{ current_user.username }}' && usersTyping[u]);
-
             if (typingUsernames.length === 0) {
                 typingIndicator.textContent = '';
             } else if (typingUsernames.length === 1) {
@@ -228,94 +301,41 @@
             }
         }
 
-
-        // --- EVENT LISTENERS (OUVINTES DE EVENTOS) ---
-        document.body.addEventListener('click', function(event) {
-            // (Esta seção permanece a mesma)
-            if (event.target && event.target.id === 'start-private-chat') {
-                const recipientUsername = event.target.dataset.recipient;
-                chatState.mode = 'private';
-                chatState.recipient = recipientUsername;
-                chatTitle.innerHTML = `Conversa com ${recipientUsername} <button id="back-to-global" class="btn btn-sm btn-outline-light ms-2">Voltar</button>`;
-                chatBody.innerHTML = '';
-                socket.emit('join_private_chat', { 'recipient_username': recipientUsername });
-                bsChatContent.show();
-            }
-            if (event.target && event.target.id === 'back-to-global') {
-                 event.stopPropagation();
-                 chatState.mode = 'global';
-                 chatState.recipient = null;
-                 chatState.room = null;
-                 chatTitle.textContent = 'Chat Global';
-                 chatBody.innerHTML = '<p class="text-muted text-center small">Bem-vindo ao Chat Global!</p>';
-                 // Limpa indicador ao voltar para o global
-                 usersTyping = {};
-                 updateTypingIndicator();
-            }
-        });
-
+        // --- EVENT LISTENERS ---
         chatHeader.addEventListener('click', () => { bsChatContent.toggle(); });
-
-        chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const message = messageInput.value.trim();
-            if (!message) return;
-            // Para de mostrar o indicador de "digitando" quando envia a mensagem
-            socket.emit('typing_stop', { 'room': chatState.room });
-
-            if (chatState.mode === 'private') {
-                socket.emit('private_message', { 'message': message, 'recipient_username': chatState.recipient });
-            } else {
-                socket.emit('new_message', { 'message': message });
-            }
-            messageInput.value = '';
-        });
-
-        // --- NOVO: Event listeners para o input de mensagem ---
-        messageInput.addEventListener('input', () => {
-            clearTimeout(typingTimer);
-            socket.emit('typing_start', { 'room': chatState.room });
-        });
-
-        messageInput.addEventListener('keyup', () => {
-            clearTimeout(typingTimer);
-            typingTimer = setTimeout(() => {
-                socket.emit('typing_stop', { 'room': chatState.room });
-            }, doneTypingInterval);
-        });
-
-        // --- SOCKET.IO HANDLERS (MANIPULADORES DE SOCKETS) ---
-        socket.on('chat_message', addMessageToChat);
-        socket.on('new_private_message', addMessageToChat);
-        socket.on('private_message_history', (data) => {
-            chatState.room = data.room;
-            chatBody.innerHTML = '';
-             // Limpa indicador ao entrar em uma sala privada
-            usersTyping = {};
-            updateTypingIndicator();
-
-            if (data.history.length === 0) {
-                chatBody.innerHTML = '<p class="text-muted text-center small">Nenhuma mensagem ainda. Diga oi!</p>';
-            } else {
-                data.history.forEach(addMessageToChat);
+        chatForm.addEventListener('submit', (e) => { e.preventDefault(); const message = messageInput.value.trim(); if (!message || !chatState.recipient) return; socket.emit('typing_stop', { 'room': chatState.room }); socket.emit('private_message', { 'message': message, 'recipient_username': chatState.recipient }); messageInput.value = ''; });
+        messageInput.addEventListener('input', () => { clearTimeout(typingTimer); if (chatState.room) socket.emit('typing_start', { 'room': chatState.room }); });
+        messageInput.addEventListener('keyup', () => { clearTimeout(typingTimer); typingTimer = setTimeout(() => { if (chatState.room) socket.emit('typing_stop', { 'room': chatState.room }); }, doneTypingInterval); });
+        
+        // --- SOCKET.IO HANDLERS ---
+        socket.on('new_private_message', (data) => {
+            // Adiciona a mensagem apenas se a conversa correta estiver aberta
+            if (data.username === chatState.recipient || data.username === '{{ current_user.username }}') {
+                addMessageToChat(data);
             }
         });
-        socket.on('update_online_users', (users) => { onlineUsersCount.textContent = `${users.length} online`; });
+        
+        socket.on('private_message_history', (data) => { chatState.room = data.room; chatBody.innerHTML = ''; usersTyping = {}; updateTypingIndicator(); if (data.history.length === 0) { chatBody.innerHTML = '<p class="text-muted text-center small">Nenhuma mensagem ainda. Diga oi!</p>'; } else { data.history.forEach(addMessageToChat); } });
+        socket.on('update_online_users', (users) => { document.getElementById('online-users-count').textContent = `${users.length} online`; onlineUsersList = users; if (friendsListView.style.display === 'block') { populateFriendsList(); } });
+        socket.on('user_typing_start', (data) => { if (data.username !== '{{ current_user.username }}') { usersTyping[data.username] = true; updateTypingIndicator(); } });
+        socket.on('user_typing_stop', (data) => { if (data.username !== '{{ current_user.username }}') { delete usersTyping[data.username]; updateTypingIndicator(); } });
 
-        // --- NOVO: Socket handlers para o indicador ---
-        socket.on('user_typing_start', (data) => {
-            if (data.username !== '{{ current_user.username }}') {
-                usersTyping[data.username] = true;
-                updateTypingIndicator();
+        // --- NOVO: Handler para Notificações ---
+        socket.on('unread_message_notification', (data) => {
+            const sender = data.sender;
+            // Aumenta a contagem de mensagens não lidas para aquele remetente
+            unreadFrom[sender] = (unreadFrom[sender] || 0) + 1;
+            // Atualiza os indicadores visuais
+            updateMainNotificationDot();
+            // Se a lista de amigos estiver visível, redesenha-a para mostrar o novo indicador
+            if (friendsListView.style.display === 'block') {
+                populateFriendsList();
             }
         });
 
-        socket.on('user_typing_stop', (data) => {
-            if (data.username !== '{{ current_user.username }}') {
-                delete usersTyping[data.username];
-                updateTypingIndicator();
-            }
-        });
+        // --- INICIALIZAÇÃO ---
+        showFriendsList(); // Mostra a lista de amigos ao carregar
+        updateMainNotificationDot(); // Verifica se já há notificações ao carregar
     });
     {% endif %}
 </script>
