@@ -1,6 +1,12 @@
 # run.py
 
-# --- IMPORTAÇÃO MODIFICADA ---
+# --- NOVA IMPORTAÇÃO E CHAMADA ADICIONADAS ---
+# Importa e executa o monkey_patch do eventlet no início de tudo.
+# Isso garante que as bibliotecas padrão sejam modificadas antes que
+# qualquer outra parte da aplicação (Flask, SQLAlchemy, etc.) seja carregada.
+import eventlet
+eventlet.monkey_patch()
+
 # Importamos 'socketio' junto com 'create_app' e 'db'
 from app import create_app, db, socketio
 from app.models import User, Course, Lesson, Quiz
@@ -99,6 +105,5 @@ def create_courses_command():
 
 
 if __name__ == '__main__':
-    # --- MODO DE EXECUÇÃO ALTERADO ---
     # Agora usamos socketio.run() para iniciar o servidor correto
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)

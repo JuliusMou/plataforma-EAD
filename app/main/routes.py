@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from . import main
 from flask_login import login_required, current_user
 from flask import render_template, flash, redirect, url_for, request
-# Adiciona Enrollment
 from app.models import User, Course, Lesson, Question, Answer, Quiz, Friendship, CourseRating, Enrollment
 from app import db
 from .forms import EditProfileForm
@@ -128,7 +127,13 @@ def adicionar_amigo(username):
         flash('Um pedido de amizade já existe com este usuário.', 'info')
         return redirect(url_for('main.pagina_perfil', username=username))
 
-    new_friendship = Friendship(requester_id=current_user.id, addressee_id=user_to_add.id, status='pending')
+    message = request.form.get('message', '').strip()
+    new_friendship = Friendship(
+        requester_id=current_user.id,
+        addressee_id=user_to_add.id,
+        status='pending',
+        message=message if message else None
+    )
     db.session.add(new_friendship)
     db.session.commit()
     flash(f'Pedido de amizade enviado para {username}.', 'success')
@@ -206,7 +211,6 @@ def pagina_aula(course_id, lesson_id):
                            is_completed=is_completed)
 
 
-# --- ROTA CORRIGIDA ---
 @main.route('/aula/concluir/<int:lesson_id>', methods=['POST'])
 @login_required
 def concluir_aula(lesson_id):
@@ -215,13 +219,10 @@ def concluir_aula(lesson_id):
 
     if not current_user.has_completed_lesson(aula):
         current_user.completed_lessons.append(aula)
-
-        # Encontra a inscrição do usuário no curso
         enrollment = current_user.get_enrollment_for(course)
         if enrollment:
-            enrollment.score += 10  # Adiciona pontos na inscrição
-
-        current_user.score += 10  # Mantém a pontuação global para o ranking geral
+            enrollment.score += 10
+        current_user.score += 10
         db.session.commit()
         flash(f'Parabéns! Você concluiu a aula "{aula.title}" e ganhou 10 pontos!', 'success')
     else:
@@ -267,6 +268,9 @@ def submit_quiz(quiz_id):
     flash(
         f'Você acertou {respostas_corretas} de {total_perguntas} perguntas e ganhou {pontos_ganhos} pontos neste curso!',
         'success')
+
+    # --- LINHA CORRIGIDA ---
+    # O parêntese de fechamento e o argumento 'lesson_id' foram adicionados.
     return redirect(url_for('main.pagina_aula', course_id=quiz.lesson.course.id, lesson_id=quiz.lesson.id))
 
 

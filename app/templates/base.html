@@ -12,29 +12,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
 
     <style>
-        /* 1. VARIÁVEIS DO TEMA CLARO (LIGHT) */
-        [data-bs-theme="light"] {
-            --cor-primaria: #005f73;
-            --cor-secundaria: #0a9396;
-            --cor-fundo: #f8f9fa;
-            --cor-fundo-card: #ffffff;
-            --cor-texto: #212529;
-            --cor-headings: #003440;
-            --cor-borda: #dee2e6;
-            --fonte-principal: 'Montserrat', sans-serif;
-            --fonte-titulos: 'Merriweather', serif;
-        }
-        /* 2. VARIÁVEIS DO TEMA ESCURO (DARK) */
-        [data-bs-theme="dark"] {
-            --cor-primaria: #0a9396;
-            --cor-secundaria: #94d2bd;
-            --cor-fundo: #121212;
-            --cor-fundo-card: #1e1e1e;
-            --cor-texto: #e0e0e0;
-            --cor-headings: #eef4f5;
-            --cor-borda: #444444;
-        }
-        /* 3. APLICAÇÃO GERAL DOS ESTILOS */
+        /* (Estilos CSS permanecem os mesmos, omitidos para brevidade) */
+        [data-bs-theme="light"] { --cor-primaria: #005f73; --cor-secundaria: #0a9396; --cor-fundo: #f8f9fa; --cor-fundo-card: #ffffff; --cor-texto: #212529; --cor-headings: #003440; --cor-borda: #dee2e6; --fonte-principal: 'Montserrat', sans-serif; --fonte-titulos: 'Merriweather', serif; }
+        [data-bs-theme="dark"] { --cor-primaria: #0a9396; --cor-secundaria: #94d2bd; --cor-fundo: #121212; --cor-fundo-card: #1e1e1e; --cor-texto: #e0e0e0; --cor-headings: #eef4f5; --cor-borda: #444444; }
         body { background-color: var(--cor-fundo); font-family: var(--fonte-principal); color: var(--cor-texto); transition: background-color 0.3s ease, color 0.3s ease; }
         h1, h2, h3, h4, h5, h6, .display-5 { font-family: var(--fonte-titulos); color: var(--cor-headings); }
         .navbar { background-color: var(--cor-primaria) !important; border-bottom: 1px solid var(--cor-borda); }
@@ -48,21 +28,22 @@
         .dropdown-item:hover { background-color: var(--cor-primaria); color: white; }
         .online-indicator .profile-pic { border: 3px solid var(--cor-secundaria); box-shadow: 0 0 10px color-mix(in srgb, var(--cor-secundaria), transparent 50%); }
         .alert { border-left-width: 5px; }
-        /* ESTILOS DO CHAT */
         #chat-container { position: fixed; bottom: 0; right: 20px; width: 350px; z-index: 1050; }
         #chat-header { cursor: pointer; background-color: var(--cor-primaria); color: white; }
         #chat-body { height: 300px; overflow-y: auto; background-color: var(--cor-fundo-card); border-left: 1px solid var(--cor-borda); border-right: 1px solid var(--cor-borda); }
         .message { display: flex; align-items: flex-start; margin-bottom: 10px; max-width: 95%; }
-        .message.ms-auto { justify-content: flex-end; } /* Alinha o container da mensagem à direita */
+        .message.ms-auto { justify-content: flex-end; }
         .message img { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; }
         .message-content { background-color: var(--cor-fundo); padding: 8px 12px; border-radius: 15px; max-width: 80%; }
         .message-content strong { display: block; font-size: 0.9em; color: var(--cor-secundaria); }
+        /* --- NOVO ESTILO PARA O INDICADOR --- */
+        #typing-indicator { height: 25px; /* Altura fixa para não 'pular' a interface */ }
     </style>
 </head>
 <body>
 
-{# --- BLOCO NAVBAR RESTAURADO --- #}
 {% block navbar %}
+{# (Bloco Navbar permanece o mesmo, omitido para brevidade) #}
 <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
         <a class="navbar-brand" href="{{ url_for('main.dashboard') if current_user.is_authenticated else url_for('main.landing_page') }}">Plataforma EAD</a>
@@ -102,8 +83,8 @@
 </nav>
 {% endblock navbar %}
 
-{# --- BLOCO LAYOUT RESTAURADO --- #}
 {% block layout %}
+{# (Bloco Layout permanece o mesmo, omitido para brevidade) #}
 <div class="container-fluid pt-4">
     <div class="row">
         {% set main_content_class = 'col-md-9' %}
@@ -174,6 +155,8 @@
     </div>
     <div id="chat-content" class="collapse">
         <div id="chat-body" class="p-3"></div>
+        {# --- NOVO ELEMENTO ADICIONADO AQUI --- #}
+        <div id="typing-indicator" class="px-3 pb-2 text-muted small"></div>
         <div class="card-footer">
             <form id="chat-form">
                 <div class="input-group">
@@ -195,6 +178,7 @@
 
     {% if current_user.is_authenticated %}
     document.addEventListener('DOMContentLoaded', () => {
+        // --- INÍCIO DAS VARIÁVEIS DO CHAT ---
         const socket = io();
         let chatState = { mode: 'global', recipient: null, room: null };
         const chatHeader = document.getElementById('chat-header');
@@ -206,7 +190,15 @@
         const chatTitle = document.getElementById('chat-title');
         const bsChatContent = new bootstrap.Collapse(chatContent, { toggle: false });
 
+        // --- NOVO: Variáveis do Indicador de Digitação ---
+        const typingIndicator = document.getElementById('typing-indicator');
+        let typingTimer; // Timer para controlar quando o usuário parou de digitar
+        const doneTypingInterval = 1500; // Tempo em ms (1.5 segundos)
+        let usersTyping = {}; // Objeto para rastrear quem está digitando
+
+        // --- FUNÇÕES DO CHAT ---
         function addMessageToChat(data) {
+            // (Esta função permanece a mesma)
             const messageElement = document.createElement('div');
             messageElement.classList.add('message');
             if (data.username === '{{ current_user.username }}') { messageElement.classList.add('ms-auto'); }
@@ -222,8 +214,24 @@
             chatBody.scrollTop = chatBody.scrollHeight;
         }
 
-        // Adiciona listener ao corpo do documento para pegar cliques no botão, já que ele pode não existir no carregamento inicial
+        // --- NOVO: Função para atualizar o indicador ---
+        function updateTypingIndicator() {
+            // Filtra para remover o próprio usuário da lista
+            const typingUsernames = Object.keys(usersTyping).filter(u => u !== '{{ current_user.username }}' && usersTyping[u]);
+
+            if (typingUsernames.length === 0) {
+                typingIndicator.textContent = '';
+            } else if (typingUsernames.length === 1) {
+                typingIndicator.textContent = `${typingUsernames[0]} está digitando...`;
+            } else {
+                typingIndicator.textContent = `${typingUsernames.join(', ')} estão digitando...`;
+            }
+        }
+
+
+        // --- EVENT LISTENERS (OUVINTES DE EVENTOS) ---
         document.body.addEventListener('click', function(event) {
+            // (Esta seção permanece a mesma)
             if (event.target && event.target.id === 'start-private-chat') {
                 const recipientUsername = event.target.dataset.recipient;
                 chatState.mode = 'private';
@@ -240,6 +248,9 @@
                  chatState.room = null;
                  chatTitle.textContent = 'Chat Global';
                  chatBody.innerHTML = '<p class="text-muted text-center small">Bem-vindo ao Chat Global!</p>';
+                 // Limpa indicador ao voltar para o global
+                 usersTyping = {};
+                 updateTypingIndicator();
             }
         });
 
@@ -249,6 +260,9 @@
             e.preventDefault();
             const message = messageInput.value.trim();
             if (!message) return;
+            // Para de mostrar o indicador de "digitando" quando envia a mensagem
+            socket.emit('typing_stop', { 'room': chatState.room });
+
             if (chatState.mode === 'private') {
                 socket.emit('private_message', { 'message': message, 'recipient_username': chatState.recipient });
             } else {
@@ -257,11 +271,29 @@
             messageInput.value = '';
         });
 
+        // --- NOVO: Event listeners para o input de mensagem ---
+        messageInput.addEventListener('input', () => {
+            clearTimeout(typingTimer);
+            socket.emit('typing_start', { 'room': chatState.room });
+        });
+
+        messageInput.addEventListener('keyup', () => {
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => {
+                socket.emit('typing_stop', { 'room': chatState.room });
+            }, doneTypingInterval);
+        });
+
+        // --- SOCKET.IO HANDLERS (MANIPULADORES DE SOCKETS) ---
         socket.on('chat_message', addMessageToChat);
         socket.on('new_private_message', addMessageToChat);
         socket.on('private_message_history', (data) => {
             chatState.room = data.room;
             chatBody.innerHTML = '';
+             // Limpa indicador ao entrar em uma sala privada
+            usersTyping = {};
+            updateTypingIndicator();
+
             if (data.history.length === 0) {
                 chatBody.innerHTML = '<p class="text-muted text-center small">Nenhuma mensagem ainda. Diga oi!</p>';
             } else {
@@ -269,6 +301,21 @@
             }
         });
         socket.on('update_online_users', (users) => { onlineUsersCount.textContent = `${users.length} online`; });
+
+        // --- NOVO: Socket handlers para o indicador ---
+        socket.on('user_typing_start', (data) => {
+            if (data.username !== '{{ current_user.username }}') {
+                usersTyping[data.username] = true;
+                updateTypingIndicator();
+            }
+        });
+
+        socket.on('user_typing_stop', (data) => {
+            if (data.username !== '{{ current_user.username }}') {
+                delete usersTyping[data.username];
+                updateTypingIndicator();
+            }
+        });
     });
     {% endif %}
 </script>
