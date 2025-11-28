@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block navbar %}
+{# Deixamos o bloco da navbar vazio para não a renderizar nesta página #}
+{% endblock navbar %}
+
+{% block title %}Cadastro - Plataforma EAD{% endblock %}
+
+{% block layout %}
+<style>
+    /* Estilos específicos para a página de cadastro */
+    body {
+        overflow-x: hidden;
+    }
+
+    .register-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("{{ url_for('static', filename='img/register_bg.jpg') }}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        z-index: -1;
+        /* Efeito de desfoque */
+        filter: blur(4px);
+        transform: scale(1.05);
+    }
+
+    /* Overlay escuro para melhorar contraste */
+    .register-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); /* Um pouco mais escuro que o login para a imagem elétrica */
+        z-index: -1;
+    }
+
+    .register-card {
+        background-color: rgba(255, 255, 255, 0.95);
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    [data-bs-theme="dark"] .register-card {
+        background-color: rgba(30, 30, 30, 0.95);
+    }
+
+    .btn-home-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        transition: transform 0.2s;
+        background-color: var(--cor-primaria);
+        color: white;
+        margin: 0 auto;
+        border: 2px solid white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .btn-home-icon:hover {
+        transform: scale(1.1);
+        color: white;
+        background-color: var(--cor-secundaria);
+    }
+</style>
+
+<!-- Background Elements -->
+<div class="register-background"></div>
+<div class="register-overlay"></div>
+
+<div class="container min-vh-100 d-flex align-items-center justify-content-center py-5">
+    {% block content %}
+        <div class="col-md-6 col-lg-5">
+
+            <div class="text-center mb-4">
+                <a href="{{ url_for('main.landing_page') }}" class="btn-home-icon" title="Voltar para a Página Principal">
+                    <i class="bi bi-house-door-fill"></i>
+                </a>
+            </div>
+
+            <div class="card shadow-sm register-card">
+                <div class="card-body p-4">
+
+                    <h2 class="card-title text-center mb-4">Crie sua Conta</h2>
+                    <p class="text-center text-muted small mb-4">Junte-se à nossa comunidade de aprendizado</p>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category or 'info' }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('auth.pagina_cadastro') }}" novalidate>
+                        <div class="mb-3">
+                            <label for="username" class="form-label fw-bold">Nome de Usuário</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" id="username" name="username" class="form-control" placeholder="Escolha um nome único" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label fw-bold">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" id="email" name="email" class="form-control" placeholder="seu@email.com" required>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="password" class="form-label fw-bold">Senha</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" id="password" name="password" class="form-control" placeholder="Crie uma senha forte" required>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">Cadastrar</button>
+                        </div>
+                    </form>
+
+                    <div class="text-center mt-4 pt-2 border-top">
+                        <p class="small text-muted mb-0">
+                            Já tem uma conta?
+                            <a href="{{ url_for('auth.pagina_login') }}" class="fw-bold text-decoration-none">Faça o login</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endblock content %}
+</div>
+{% endblock layout %}

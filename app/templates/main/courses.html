@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Cursos Disponíveis{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Nossos Cursos</h1>
+        <form action="{{ url_for('main.pagina_cursos') }}" method="GET" class="d-flex">
+            <input class="form-control me-2" type="search" name="q" placeholder="Buscar cursos..." aria-label="Search" value="{{ search_query or '' }}">
+            <button class="btn btn-outline-primary" type="submit">Buscar</button>
+        </form>
+    </div>
+
+    <p>Explore nossa seleção de cursos de eletrotécnica e automação industrial. Inscreva-se para começar a aprender!</p>
+    <hr>
+
+    {% if search_query %}
+        <p class="mb-4">Resultados para: <strong>{{ search_query }}</strong> <a href="{{ url_for('main.pagina_cursos') }}" class="small ms-2 text-decoration-none">(Limpar)</a></p>
+    {% endif %}
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for curso in cursos %}
+            <div class="col">
+                <div class="course-card-wrapper">
+
+                    <!-- CARD COMPACTO (Visível por padrão) -->
+                    <div class="course-card-compact">
+                        <div class="mb-2">
+                            <h5 class="card-title fw-bold text-truncate" title="{{ curso.title }}">{{ curso.title }}</h5>
+                            <span class="badge bg-light text-dark border">{{ curso.category }}</span>
+                        </div>
+
+                        <div class="mb-2">
+                            {% set avg_rating = curso.average_rating() %}
+                            <span class="text-warning">
+                                {% if avg_rating > 0 %}
+                                    <i class="bi bi-star-fill"></i> {{ avg_rating }}
+                                {% else %}
+                                    <i class="bi bi-star"></i> -
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <p class="card-text small text-muted flex-grow-1">{{ curso.description | truncate(80) }}</p>
+
+                        <div class="mt-auto pt-2 border-top">
+                            {% if current_user.is_enrolled(curso) %}
+                                <span class="badge bg-success w-100"><i class="bi bi-check-circle me-1"></i>Inscrito</span>
+                            {% else %}
+                                <span class="badge bg-secondary w-100">Não Inscrito</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- CARD EXPANDIDO (Visível no Hover) -->
+                    <div class="course-card-expanded">
+                        <div class="mb-3">
+                            <h5 class="card-title fw-bold">{{ curso.title }}</h5>
+                            <span class="badge bg-primary">{{ curso.category }}</span>
+                        </div>
+
+                        <p class="card-text small mb-3">{{ curso.description | truncate(200) }}</p>
+
+                        <!-- Ações Principais -->
+                        <div class="d-grid gap-2 mb-3">
+                            <a href="{{ url_for('main.pagina_curso', course_id=curso.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye me-1"></i>Ver Detalhes
+                            </a>
+
+                            {% if current_user.is_enrolled(curso) %}
+                                <form action="{{ url_for('main.unenroll', course_id=curso.id) }}" method="POST">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger w-100">Cancelar Inscrição</button>
+                                </form>
+                            {% else %}
+                                <form action="{{ url_for('main.enroll', course_id=curso.id) }}" method="POST">
+                                    <button type="submit" class="btn btn-sm btn-success w-100">Inscrever-se Agora</button>
+                                </form>
+                            {% endif %}
+                        </div>
+
+                        <!-- Avaliação (Apenas se inscrito ou visualizando) -->
+                        <div class="mb-3 text-center">
+                            <small class="text-muted d-block mb-1">Avaliar:</small>
+                            <form action="{{ url_for('main.rate_course', course_id=curso.id) }}" method="POST" class="star-rating-form">
+                                <div class="star-rating justify-content-center">
+                                    {% set user_rating = curso.user_rating(current_user) or 0 %}
+                                    {% for i in range(5, 0, -1) %}
+                                        <button type="submit" name="stars" value="{{ i }}" class="star-btn {% if i <= user_rating %}rated{% endif %}">
+                                            <i class="bi bi-star-fill"></i>
+                                        </button>
+                                    {% endfor %}
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Rodapé de Interação -->
+                        <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <!-- Like/Dislike usando JS fetch futuramente ou forms simples agora -->
+                                <button class="btn btn-link text-decoration-none p-0 me-2 interact-btn" data-course-id="{{ curso.id }}" data-action="like">
+                                    <i class="bi bi-hand-thumbs-up"></i> <span id="likes-count-{{ curso.id }}">{{ curso.likes.filter_by(is_like=True).count() }}</span>
+                                </button>
+                                <button class="btn btn-link text-decoration-none p-0 interact-btn" data-course-id="{{ curso.id }}" data-action="dislike">
+                                    <i class="bi bi-hand-thumbs-down"></i> <span id="dislikes-count-{{ curso.id }}">{{ curso.likes.filter_by(is_like=False).count() }}</span>
+                                </button>
+                            </div>
+
+                            <button type="button" class="btn btn-sm btn-link text-secondary p-0" data-bs-toggle="modal" data-bs-target="#shareModal" data-course-id="{{ curso.id }}" data-course-title="{{ curso.title }}">
+                                <i class="bi bi-share-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle me-2"></i>Nenhum curso disponível no momento.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Modal de Compartilhamento -->
+    <div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Compartilhar Curso</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="shareForm" method="POST" action="">
+                    <div class="modal-body">
+                        <p>Recomendar <strong id="modalCourseTitle"></strong> para um amigo:</p>
+
+                        <div class="mb-3">
+                            <label for="friendSelect" class="form-label">Escolha um amigo:</label>
+                            {% if friends_list %}
+                                <select class="form-select" id="friendSelect" name="friend_username" required>
+                                    <option value="" selected disabled>Selecione...</option>
+                                    {% for friend in friends_list %}
+                                        <option value="{{ friend.username }}">{{ friend.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                <div class="alert alert-warning small">Você precisa adicionar amigos primeiro para compartilhar.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" {% if not friends_list %}disabled{% endif %}>Enviar Recomendação</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Script para preencher o modal dinamicamente
+        const shareModal = document.getElementById('shareModal')
+        if (shareModal) {
+            shareModal.addEventListener('show.bs.modal', event => {
+                const button = event.relatedTarget
+                const courseTitle = button.getAttribute('data-course-title')
+                const courseId = button.getAttribute('data-course-id')
+
+                const modalTitle = shareModal.querySelector('#modalCourseTitle')
+                modalTitle.textContent = courseTitle
+
+                const form = shareModal.querySelector('#shareForm')
+                form.action = `/curso/${courseId}/compartilhar`
+            })
+        }
+
+        // Script para Like/Dislike via Fetch
+        document.querySelectorAll('.interact-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                // Find button element even if icon clicked
+                const button = e.target.closest('button');
+                const courseId = button.dataset.courseId;
+                const action = button.dataset.action;
+
+                try {
+                    const response = await fetch(`/curso/${courseId}/interagir`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            // Add CSRF token if needed, usually in cookie or meta tag
+                        },
+                        body: `action=${action}`
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Update counts
+                        document.getElementById(`likes-count-${courseId}`).textContent = data.likes;
+                        document.getElementById(`dislikes-count-${courseId}`).textContent = data.dislikes;
+
+                        // Optional: Highlight the active button
+                        // Reset colors first
+                        // button.classList.add('text-primary');
+                    }
+                } catch (error) {
+                    console.error('Erro na interação:', error);
+                }
+            });
+        });
+    </script>
+{% endblock %}

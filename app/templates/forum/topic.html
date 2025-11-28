@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ topic.title }} - Fórum{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('main.forum_index') }}">Fórum</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('main.forum_category', category_id=topic.category.id) }}">{{ topic.category.name }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ topic.title }}</li>
+    </ol>
+</nav>
+
+<div class="card mb-4 border-primary">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">{{ topic.title }}</h4>
+        <small><i class="bi bi-clock me-1"></i>{{ topic.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+    </div>
+    <div class="card-body">
+        <div class="d-flex mb-3">
+            <div class="me-3 text-center" style="width: 80px;">
+                <img src="{{ url_for('static', filename='profile_pics/' + topic.user.profile_picture) }}" class="rounded-circle mb-2" style="width: 60px; height: 60px; object-fit: cover;">
+                <div class="small fw-bold">{{ topic.user.username }}</div>
+            </div>
+            <div class="flex-grow-1">
+                {{ topic.content | markdown_to_html | safe }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<h5 class="mb-3"><i class="bi bi-reply-all me-2"></i>Respostas ({{ topic.posts|length }})</h5>
+
+{% for post in topic.posts %}
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex">
+            <div class="me-3 text-center" style="width: 80px;">
+                <img src="{{ url_for('static', filename='profile_pics/' + post.user.profile_picture) }}" class="rounded-circle mb-2" style="width: 50px; height: 50px; object-fit: cover;">
+                <div class="small fw-bold">{{ post.user.username }}</div>
+            </div>
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between mb-2">
+                    <small class="text-muted">{{ post.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                </div>
+                {{ post.content | markdown_to_html | safe }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<div class="card mt-4 shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title mb-3">Responder</h5>
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+                {% if form.content.errors %}
+                    {{ form.content(class="form-control is-invalid", rows="5", placeholder="Escreva sua resposta aqui...") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.content.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.content(class="form-control", rows="5", placeholder="Escreva sua resposta aqui...") }}
+                {% endif %}
+                <div class="form-text">Suporta Markdown básico.</div>
+            </div>
+            <div class="text-end">
+                {{ form.submit(class="btn btn-primary px-4") }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

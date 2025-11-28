@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block navbar %}
+{# Deixamos o bloco da navbar vazio para não a renderizar nesta página #}
+{% endblock navbar %}
+
+{% block title %}Login - Plataforma EAD{% endblock %}
+
+{% block layout %}
+<style>
+    /* Estilos específicos para a página de login */
+    body {
+        /* Garante que o body seja transparente para mostrar o background fixo se necessário,
+           mas aqui vamos usar um div separado */
+        overflow-x: hidden;
+    }
+
+    .login-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("{{ url_for('static', filename='img/login_bg.jpg') }}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        z-index: -1;
+        /* Efeito de desfoque */
+        filter: blur(4px);
+        transform: scale(1.05); /* Escala um pouco para evitar bordas brancas pelo blur */
+    }
+
+    /* Overlay escuro para melhorar contraste */
+    .login-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        z-index: -1;
+    }
+
+    .login-card {
+        background-color: rgba(255, 255, 255, 0.95); /* Leve transparência */
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    [data-bs-theme="dark"] .login-card {
+        background-color: rgba(30, 30, 30, 0.95);
+    }
+
+    .btn-home-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        transition: transform 0.2s;
+        background-color: var(--cor-primaria);
+        color: white;
+        margin: 0 auto;
+        border: 2px solid white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .btn-home-icon:hover {
+        transform: scale(1.1);
+        color: white;
+        background-color: var(--cor-secundaria);
+    }
+</style>
+
+<!-- Background Elements -->
+<div class="login-background"></div>
+<div class="login-overlay"></div>
+
+<div class="container min-vh-100 d-flex align-items-center justify-content-center">
+    {% block content %}
+        <div class="col-md-6 col-lg-4">
+
+            <div class="text-center mb-4">
+                <a href="{{ url_for('main.landing_page') }}" class="btn-home-icon" title="Voltar para a Página Principal">
+                    <i class="bi bi-house-door-fill"></i>
+                </a>
+            </div>
+
+            <div class="card shadow-sm login-card">
+                <div class="card-body p-4">
+
+                    <h2 class="card-title text-center mb-4">Bem-vindo</h2>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category or 'info' }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('auth.pagina_login') }}" novalidate>
+                        <div class="mb-3">
+                            <label for="email" class="form-label fw-bold">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" id="email" name="email" class="form-control" placeholder="seu@email.com" required>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="password" class="form-label fw-bold">Senha</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">Entrar</button>
+                        </div>
+                    </form>
+
+                    <div class="text-center mt-4 pt-2 border-top">
+                        <p class="small mb-1">
+                            <a href="{{ url_for('auth.pagina_reset_password_request') }}" class="text-decoration-none">Esqueceu a senha?</a>
+                        </p>
+                        <p class="small text-muted mb-0">
+                            Não tem uma conta?
+                            <a href="{{ url_for('auth.pagina_cadastro') }}" class="fw-bold text-decoration-none">Cadastre-se</a>
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    {% endblock content %}
+</div>
+{% endblock layout %}

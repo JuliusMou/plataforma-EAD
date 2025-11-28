@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Tópico - Fórum{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Criar Novo Tópico</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        {{ form.title.label(class="form-label fw-bold") }}
+                        {% if form.title.errors %}
+                            {{ form.title(class="form-control is-invalid", placeholder="Ex: Dúvida sobre lógica ladder") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.title.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.title(class="form-control", placeholder="Ex: Dúvida sobre lógica ladder") }}
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.category.label(class="form-label fw-bold") }}
+                        {% if form.category.errors %}
+                            {{ form.category(class="form-select is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.category.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.category(class="form-select") }}
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.content.label(class="form-label fw-bold") }}
+                        {% if form.content.errors %}
+                            {{ form.content(class="form-control is-invalid", rows="8", placeholder="Descreva sua dúvida ou discussão...") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.content.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.content(class="form-control", rows="8", placeholder="Descreva sua dúvida ou discussão...") }}
+                        {% endif %}
+                        <div class="form-text">Suporta Markdown. Seja claro e objetivo.</div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('main.forum_index') }}" class="btn btn-outline-secondary me-md-2">Cancelar</a>
+                        {{ form.submit(class="btn btn-success px-4") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

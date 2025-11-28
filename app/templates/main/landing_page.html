@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Plataforma EAD de Elétrica, Automação e Robótica{% endblock %}
+
+{% block content %}
+    <header class="text-center hero-section mb-5">
+        <h1 class="display-4 fw-bold">Aprenda, Conecte-se e Crie o Futuro da Tecnologia</h1>
+        <p class="lead col-lg-8 mx-auto">
+            Sua jornada definitiva nos mundos da Elétrica, Automação, Arduino e Robótica começa aqui. Cursos práticos, desafios, uma comunidade vibrante e muito mais.
+        </p>
+        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+            <a href="{{ url_for('auth.pagina_cadastro') }}" class="btn btn-primary btn-lg px-4 gap-3">Comece a Aprender Agora</a>
+            <a href="#features" class="btn btn-outline-light btn-lg px-4">Conheça os Recursos</a>
+        </div>
+    </header>
+
+    <section id="features" class="features-section">
+        <h2 class="text-center mb-5">Uma Plataforma Completa</h2>
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 text-center p-4">
+                    <div class="feature-icon"><i class="bi bi-journal-code"></i></div>
+                    <h3 class="h5">Cursos Online</h3>
+                    <p class="text-muted">Conteúdo aprofundado e prático sobre Elétrica, Automação, Robótica e Arduino.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 text-center p-4">
+                    <div class="feature-icon"><i class="bi bi-check2-square"></i></div>
+                    <h3 class="h5">Quizzes e Desafios</h3>
+                    <p class="text-muted">Teste seus conhecimentos com simulados interativos e prepare-se para o mercado.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 text-center p-4">
+                    <div class="feature-icon"><i class="bi bi-people-fill"></i></div>
+                    <h3 class="h5">Comunidade e Fórum</h3>
+                    <p class="text-muted">Conecte-se com outros estudantes e profissionais, tire dúvidas e compartilhe projetos.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 text-center p-4">
+                    <div class="feature-icon"><i class="bi bi-trophy-fill"></i></div>
+                    <h3 class="h5">Ranking e Gamificação</h3>
+                    <p class="text-muted">Ganhe pontos, suba no ranking e acompanhe seu progresso de forma divertida.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 text-center p-4">
+                    <div class="feature-icon"><i class="bi bi-chat-dots-fill"></i></div>
+                    <h3 class="h5">Chat Interativo</h3>
+                    <p class="text-muted">Converse em tempo real com seus amigos e colegas de curso diretamente da plataforma.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 text-center p-4">
+                    <div class="feature-icon"><i class="bi bi-robot"></i></div>
+                    <h3 class="h5">Chatbot Assistente</h3>
+                    <p class="text-muted">Tire dúvidas rápidas e encontre o que precisa com a ajuda de nosso assistente virtual.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="course-themes-section">
+        <div class="container">
+            <h2 class="text-center mb-5">Explore Nossos Temas</h2>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="card p-3"><h5><i class="bi bi-lightning-charge text-warning me-2"></i>Elétrica Industrial</h5></div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="card p-3"><h5><i class="bi bi-cpu text-info me-2"></i>Automação e CLP</h5></div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="card p-3"><h5><i class="bi bi-motherboard text-danger me-2"></i>Arduino e Robótica</h5></div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="card p-3"><h5><i class="bi bi-house-gear text-success me-2"></i>Automação Residencial</h5></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="final-cta text-center">
+        <div class="container">
+            <h2 class="mb-4">Pronto para Começar?</h2>
+            <p class="lead mb-4">Junte-se a <strong>{{ total_users }}</strong> membros e comece sua jornada de aprendizado hoje mesmo.</p>
+            <a href="{{ url_for('auth.pagina_cadastro') }}" class="btn btn-light btn-lg">Criar Minha Conta Gratuitamente</a>
+        </div>
+    </section>
+{% endblock %}

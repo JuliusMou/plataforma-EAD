@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil de {{ user.username }}{% endblock %}
+
+{% block content %}
+    <div class="d-flex align-items-center mb-4">
+        <img src="{{ url_for('static', filename='profile_pics/' + user.profile_picture) }}" alt="Foto de perfil de {{ user.username }}" class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover; margin-right: 20px; border: 4px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+        <div>
+            <h1>{{ user.username }}</h1>
+            <p class="lead text-muted">{{ user.full_name or 'Nome não informado' }}</p>
+        </div>
+    </div>
+
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    <p><strong>Biografia:</strong> {{ user.bio or 'Nenhuma biografia adicionada.' }}</p>
+    <p><strong>Pontuação:</strong> {{ user.score }}</p>
+
+    <div class="mt-4">
+        <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="about-tab" data-bs-toggle="tab" data-bs-target="#about" type="button" role="tab" aria-controls="about" aria-selected="true">Sobre</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="timeline-tab" data-bs-toggle="tab" data-bs-target="#timeline" type="button" role="tab" aria-controls="timeline" aria-selected="false">Linha do Tempo</button>
+            </li>
+        </ul>
+        <div class="tab-content p-3 border border-top-0 rounded-bottom bg-white" id="profileTabsContent">
+
+            <!-- Tab Sobre -->
+            <div class="tab-pane fade show active" id="about" role="tabpanel" aria-labelledby="about-tab">
+                <h5>Biografia</h5>
+                <p>{{ user.bio or 'Nenhuma biografia adicionada.' }}</p>
+                <hr>
+                <h5>Conquistas</h5>
+                <p>Pontuação Total: <span class="badge bg-success">{{ user.score }}</span></p>
+            </div>
+
+            <!-- Tab Linha do Tempo -->
+            <div class="tab-pane fade" id="timeline" role="tabpanel" aria-labelledby="timeline-tab">
+                <h5>Atividades Recentes</h5>
+                {% if user.activities %}
+                    <ul class="list-group list-group-flush">
+                        {% for activity in user.activities|sort(attribute='created_at', reverse=True) %}
+                        <li class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    {% if activity.event_type == 'lesson_completed' %}
+                                        <i class="bi bi-check-circle-fill text-success me-2"></i>Concluiu Aula
+                                    {% elif activity.event_type == 'new_friend' %}
+                                        <i class="bi bi-people-fill text-info me-2"></i>Nova Amizade
+                                    {% elif activity.event_type == 'forum_topic' %}
+                                        <i class="bi bi-pencil-fill text-primary me-2"></i>Criou Tópico
+                                    {% elif activity.event_type == 'forum_post' %}
+                                        <i class="bi bi-chat-text-fill text-secondary me-2"></i>Respondeu no Fórum
+                                    {% else %}
+                                        <i class="bi bi-activity me-2"></i>Atividade
+                                    {% endif %}
+                                </h6>
+                                <small class="text-muted">{{ activity.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                            </div>
+                            <p class="mb-1">{{ activity.details }}</p>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Nenhuma atividade registrada recentemente.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if current_user != user %}
+        <div class="mt-4">
+            {% if friendship_status == 'not_friends' %}
+                {# --- FORMULÁRIO DE ADICIONAR AMIGO ATUALIZADO --- #}
+                <form action="{{ url_for('main.adicionar_amigo', username=user.username) }}" method="POST">
+                    <div class="mb-3">
+                        <label for="message" class="form-label"><strong>Enviar uma mensagem com o convite (opcional):</strong></label>
+                        <textarea class="form-control" id="message" name="message" rows="3" placeholder="Olá, gostaria de me conectar com você!"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">Adicionar Amigo</button>
+                </form>
+
+            {% elif friendship_status == 'request_sent' %}
+                <button class="btn btn-secondary" disabled>Pedido de Amizade Enviado</button>
+            {% elif friendship_status == 'request_received' %}
+                <p><strong>{{ user.username }} enviou um pedido de amizade para você.</strong></p>
+                {# Mostra a mensagem do pedido, se existir #}
+                {% for req in pending_requests if req.requester_id == user.id and req.message %}
+                    <div class="alert alert-info">
+                        <strong>Mensagem de {{ user.username }}:</strong>
+                        <p class="mb-0"><em>"{{ req.message }}"</em></p>
+                    </div>
+                {% endfor %}
+
+                {% for req in pending_requests if req.requester_id == user.id %}
+                    <form action="{{ url_for('main.aceitar_amizade', request_id=req.id) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-primary">Aceitar</button>
+                    </form>
+                    <form action="{{ url_for('main.recusar_amizade', request_id=req.id) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-danger">Recusar</button>
+                    </form>
+                {% endfor %}
+
+            {% elif friendship_status == 'friends' %}
+                <button class="btn btn-info" disabled>Amigos</button>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if current_user == user %}
+        <div class="mt-4">
+            <p><a href="{{ url_for('main.editar_perfil') }}" class="btn btn-outline-primary">Editar Perfil</a></p>
+        </div>
+
+        <hr>
+        <h3>Pedidos de Amizade Pendentes</h3>
+        {% if pending_requests %}
+            <ul class="list-group">
+                {% for req in pending_requests %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('main.pagina_perfil', username=req.requester.username) }}">{{ req.requester.username }}</a>
+                            <div>
+                                <form action="{{ url_for('main.aceitar_amizade', request_id=req.id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-primary">Aceitar</button>
+                                </form>
+                                <form action="{{ url_for('main.recusar_amizade', request_id=req.id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger">Recusar</button>
+                                </form>
+                            </div>
+                        </div>
+                        {# --- MOSTRAR MENSAGEM DO PEDIDO AQUI TAMBÉM --- #}
+                        {% if req.message %}
+                        <div class="alert alert-light mt-2">
+                           <small><strong>Mensagem:</strong> "{{ req.message }}"</small>
+                        </div>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Você não tem nenhum pedido de amizade pendente.</p>
+        {% endif %}
+    {% endif %}
+{% endblock %}

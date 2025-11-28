@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}{{ aula.title }}{% endblock %}
+
+{# Remove a sidebar da direita para dar mais espaço para o conteúdo da aula #}
+{% block sidebar %}{% endblock %}
+
+{% block layout %}
+<div class="container pt-4">
+    <div class="row">
+
+        {# Sidebar da Esquerda com a lista de aulas do curso #}
+        <aside class="col-md-3">
+            <div class="position-sticky" style="top: 2rem;">
+                <div class="p-4 mb-3 card">
+                    <h4><a href="{{ url_for('main.pagina_curso', course_id=curso.id) }}" class="text-decoration-none">{{ curso.title }}</a></h4>
+                    <p class="text-muted">{{ curso.category }}</p>
+                    <hr>
+                    <ul class="list-group list-group-flush">
+                        {% for l in curso.lessons %}
+                            <a href="{{ url_for('main.pagina_aula', course_id=curso.id, lesson_id=l.id) }}"
+                               class="list-group-item list-group-item-action {% if l.id == aula.id %}active{% endif %} d-flex justify-content-between align-items-center">
+
+                                {{ l.title }}
+
+                                {% if current_user.has_completed_lesson(l) %}
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                {% else %}
+                                    <i class="bi bi-play-circle text-muted"></i>
+                                {% endif %}
+                            </a>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        {# Conteúdo Principal da Aula e do Simulado #}
+        <main class="col-md-9">
+            <div class="pb-2 mb-3">
+                 {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category or 'info' }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <div class="mb-3">
+                <a href="{{ url_for('main.pagina_curso', course_id=curso.id) }}" class="btn-circle-back" title="Voltar para o curso">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+            </div>
+
+            <h1>{{ aula.title }}</h1>
+            <hr>
+
+            <div>
+                {{ aula.content | markdown_to_html | safe }}
+            </div>
+
+            <hr>
+
+            {% if aula.quiz %}
+                <div class="card my-4">
+                    <div class="card-header">
+                        <h3>Simulado: {{ aula.quiz.title }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('main.submit_quiz', quiz_id=aula.quiz.id) }}" method="POST">
+                            {% for pergunta in aula.quiz.questions %}
+                                <div class="mb-4">
+                                    <p><strong>{{ loop.index }}. {{ pergunta.text }}</strong></p>
+
+                                    {% for resposta in pergunta.answers %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio"
+                                                   name="pergunta_{{ pergunta.id }}"
+                                                   id="resposta_{{ resposta.id }}"
+                                                   value="{{ resposta.id }}" required>
+                                            <label class="form-check-label" for="resposta_{{ resposta.id }}">
+                                                {{ resposta.text }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                            <button type="submit" class="btn btn-primary">Enviar Respostas</button>
+                        </form>
+                    </div>
+                </div>
+
+            {% else %}
+                {% if is_completed %}
+                    <button class="btn btn-success" disabled>Concluído</button>
+                {% else %}
+                    <form action="{{ url_for('main.concluir_aula', lesson_id=aula.id) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-primary">Marcar como Concluída</button>
+                    </form>
+                {% endif %}
+            {% endif %}
+
+            <hr class="mt-5">
+            <div class="d-flex justify-content-between">
+                <div>
+                    {% if prev_lesson %}
+                        <a href="{{ url_for('main.pagina_aula', course_id=curso.id, lesson_id=prev_lesson.id) }}" class="btn btn-outline-secondary">
+                            &laquo; {{ prev_lesson.title }}
+                        </a>
+                    {% endif %}
+                </div>
+                <div>
+                    {% if next_lesson %}
+                        <a href="{{ url_for('main.pagina_aula', course_id=curso.id, lesson_id=next_lesson.id) }}" class="btn btn-outline-primary">
+                            {{ next_lesson.title }} &raquo;
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock layout %}
+
+{% block content %}{% endblock %}

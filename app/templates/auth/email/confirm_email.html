@@ -1,0 +1,10 @@
+<p>Olá, {{ user.username }},</p>
+<p>Bem-vindo à Plataforma EAD! Por favor, confirme sua conta clicando no link abaixo:</p>
+<p>
+    <a href="{{ url_for('auth.confirm_email', token=token, _external=True) }}">
+        Confirmar Minha Conta
+    </a>
+</p>
+<p><small>O link é válido por 1 hora.</small></p>
+<p>Se você não se cadastrou em nosso site, por favor, ignore este e-mail.</p>
+<p>Atenciosamente,<br>Equipe da Plataforma EAD</p>

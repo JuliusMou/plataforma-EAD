@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}{{ curso.title }}{% endblock %}
+
+{% block content %}
+    <div>
+        <div class="mb-3">
+            <a href="{{ url_for('main.pagina_cursos') }}" class="btn-circle-back" title="Voltar para a lista de cursos">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+        </div>
+
+        <h1>{{ curso.title }}</h1>
+        <p class="text-muted"><strong>Categoria:</strong> {{ curso.category }}</p>
+        <hr>
+
+        <h3>Descrição do Curso</h3>
+        <div>
+            {{ curso.description | markdown_to_html | safe }}
+        </div>
+
+        <hr class="my-4">
+
+        <h4 class="mb-3">Seu Progresso</h4>
+        <div class="progress-bordered mb-3">
+            <div class="progress" role="progressbar" aria-label="Progresso do curso" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="height: 10px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: {{ progress }}%"></div>
+            </div>
+        </div>
+
+
+        {% if curso.lessons %}
+            <a href="{{ url_for('main.pagina_aula', course_id=curso.id, lesson_id=curso.lessons[0].id) }}" class="btn btn-primary mt-4 btn-access-content">
+                <i class="bi bi-play-circle-fill me-2"></i>Acessar Conteúdo
+            </a>
+        {% else %}
+            <button class="btn btn-secondary mt-4 btn-access-content" disabled>Conteúdo indisponível</button>
+        {% endif %}
+    </div>
+{% endblock %}

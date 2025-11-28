@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Meu Painel - Plataforma EAD{% endblock %}
+
+{% block content %}
+    <h1>Bem-vindo à Plataforma, {{ current_user.username }}!</h1>
+    <p>Este é o seu painel principal. Continue de onde parou e acompanhe seu progresso.</p>
+
+    <p class="text-muted">
+        Atualmente somos <strong>{{ total_users }}</strong> membros na plataforma, com <strong>{{ online_users }}</strong> online agora.
+    </p>
+
+    <hr>
+
+    <h2>Meus Cursos em Andamento</h2>
+
+    {# Verifica se o usuário tem inscrições e as exibe em formato de cards #}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-2">
+        {% if current_user.enrollments.all() %}
+            {% for enrollment in current_user.enrollments %}
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ enrollment.course.title }}</h5>
+                            <p class="card-text text-muted">{{ enrollment.course.category }}</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small>Pontuação:</small>
+                                    <p class="h5">{{ enrollment.score }} Pt.</p>
+                                </div>
+                                <div>
+                                <a href="{{ url_for('main.pagina_curso', course_id=enrollment.course.id) }}" class="btn btn-primary">Acessar Curso</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            {# Mensagem exibida se o usuário não estiver inscrito em nenhum curso #}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    Você ainda não se inscreveu em nenhum curso.
+                    <a href="{{ url_for('main.pagina_cursos') }}" class="alert-link">Explore nosso catálogo</a> e comece a aprender!
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+{% endblock %}

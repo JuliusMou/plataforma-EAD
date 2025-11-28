@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Minhas Sugestões - Plataforma EAD{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-list-check me-2"></i>Minhas Sugestões</h2>
+    <a href="{{ url_for('main.sugerir_conteudo') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Nova Sugestão
+    </a>
+</div>
+
+{% if sugestoes %}
+    <div class="row">
+        {% for sugestao in sugestoes %}
+        <div class="col-md-12 mb-3">
+            <div class="card shadow-sm h-100 border-start border-5
+                {% if sugestao.status == 'aprovado' %}border-success
+                {% elif sugestao.status == 'rejeitado' %}border-danger
+                {% else %}border-warning{% endif %}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h5 class="card-title fw-bold text-primary mb-1">{{ sugestao.title }}</h5>
+                        <span class="badge rounded-pill
+                            {% if sugestao.status == 'aprovado' %}bg-success
+                            {% elif sugestao.status == 'rejeitado' %}bg-danger
+                            {% else %}bg-warning text-dark{% endif %}">
+                            {{ sugestao.status|capitalize }}
+                        </span>
+                    </div>
+                    <h6 class="card-subtitle mb-2 text-muted small">
+                        <i class="bi bi-calendar3 me-1"></i>Enviado em: {{ sugestao.created_at.strftime('%d/%m/%Y') }}
+                        <span class="mx-2">|</span>
+                        <i class="bi bi-tag-fill me-1"></i>Tipo: {{ sugestao.content_type|capitalize }}
+                    </h6>
+                    <p class="card-text mt-3">{{ sugestao.description }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info text-center py-5">
+        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+        <h4>Nenhuma sugestão enviada ainda.</h4>
+        <p>Você ainda não enviou nenhuma sugestão de conteúdo. Ajude-nos a melhorar a plataforma!</p>
+        <a href="{{ url_for('main.sugerir_conteudo') }}" class="btn btn-outline-primary mt-2">Enviar minha primeira sugestão</a>
+    </div>
+{% endif %}
+{% endblock %}

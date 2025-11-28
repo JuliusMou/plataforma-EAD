@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Sugerir Conteúdo - Plataforma EAD{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0"><i class="bi bi-lightbulb-fill me-2"></i>Sugerir Novo Conteúdo</h4>
+    </div>
+    <div class="card-body p-4">
+        <p class="lead text-muted">Tem uma ideia incrível para um novo curso, artigo ou podcast? Compartilhe conosco!</p>
+        <hr>
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+
+            <div class="mb-3">
+                {{ form.title.label(class="form-label fw-bold") }}
+                {% if form.title.errors %}
+                    {{ form.title(class="form-control is-invalid", placeholder="Ex: Curso de Python Avançado") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.title.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.title(class="form-control", placeholder="Ex: Curso de Python Avançado") }}
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.content_type.label(class="form-label fw-bold") }}
+                {% if form.content_type.errors %}
+                    {{ form.content_type(class="form-select is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.content_type.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.content_type(class="form-select") }}
+                {% endif %}
+                <div class="form-text">Selecione o formato que melhor se adequa à sua ideia.</div>
+            </div>
+
+            <div class="mb-3">
+                {{ form.description.label(class="form-label fw-bold") }}
+                {% if form.description.errors %}
+                    {{ form.description(class="form-control is-invalid", rows="6", placeholder="Descreva sua ideia com o máximo de detalhes possível. O que deve ser abordado? Qual o público-alvo?") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.description.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.description(class="form-control", rows="6", placeholder="Descreva sua ideia com o máximo de detalhes possível. O que deve ser abordado? Qual o público-alvo?") }}
+                {% endif %}
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ url_for('main.minhas_sugestoes') }}" class="btn btn-outline-secondary me-md-2">Cancelar</a>
+                {{ form.submit(class="btn btn-success px-4") }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

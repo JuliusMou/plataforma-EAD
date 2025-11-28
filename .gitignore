@@ -1,0 +1,21 @@
+# Ambientes Virtuais
+.venv/
+venv/
+
+# Ficheiros de Cache do Python
+__pycache__/
+*.pyc
+
+# Ficheiros do PyCharm
+.idea/
+
+# Ficheiros de build e distribuição
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# DB
+*.db
