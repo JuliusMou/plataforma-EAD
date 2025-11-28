@@ -4,33 +4,45 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@700&display=swap');
 
 :root {
-    /* Base Colors - Modern Palette */
-    --primary-color: #2563eb;       /* Royal Blue */
-    --primary-hover: #1d4ed8;
-    --secondary-color: #f59e0b;     /* Amber - High Contrast Accent */
-    --accent-color: #06b6d4;        /* Cyan */
-    --success-color: #10b981;       /* Emerald */
-    --danger-color: #ef4444;        /* Red */
-    --info-color: #3b82f6;          /* Blue */
+    /* Base Colors - Refined Modern Palette */
+    --primary-color: #3b82f6;       /* Blue 500 */
+    --primary-hover: #2563eb;       /* Blue 600 */
+    --secondary-color: #f59e0b;     /* Amber 500 */
+    --accent-color: #06b6d4;        /* Cyan 500 */
+    --success-color: #10b981;       /* Emerald 500 */
+    --danger-color: #ef4444;        /* Red 500 */
+    --info-color: #6366f1;          /* Indigo 500 */
+    --light-bg: #f3f4f6;            /* Gray 100 */
+    --dark-bg: #111827;             /* Gray 900 */
+    --text-primary: #111827;        /* Gray 900 */
+    --text-secondary: #6b7280;      /* Gray 500 */
+    --text-muted: #9ca3af;          /* Gray 400 */
 
-    /* Layout */
+    /* Layout Dimensions */
+    --sidebar-width: 260px;
+    --header-height: 70px;
+
+    /* Styling Variables */
     --border-radius-lg: 1rem;
     --border-radius-md: 0.75rem;
-    --border-radius-sm: 0.375rem;
+    --border-radius-sm: 0.5rem;
     --box-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --box-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --box-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --transition-base: all 0.2s ease-in-out;
 }
 
 [data-bs-theme="light"] {
-    --bs-body-bg: #f3f4f6;          /* Cool Gray 100 */
-    --bs-body-color: #1f2937;       /* Gray 800 */
+    --bs-body-bg: #f8fafc;          /* Slate 50 */
+    --bs-body-color: #1e293b;       /* Slate 800 */
     --card-bg: #ffffff;
-    --card-border: rgba(0, 0, 0, 0.05);
-    --navbar-bg: rgba(255, 255, 255, 0.85);
-    --navbar-text: #1f2937;
+    --card-border: #e2e8f0;         /* Slate 200 */
     --sidebar-bg: #ffffff;
-    --cor-primaria: var(--primary-color); /* Mantendo compatibilidade com código legado */
+    --sidebar-text: #475569;        /* Slate 600 */
+    --sidebar-text-active: #2563eb; /* Blue 600 */
+    --sidebar-border: #e2e8f0;
+    --navbar-bg: #ffffff;
+    --cor-primaria: var(--primary-color);
     --cor-secundaria: var(--secondary-color);
     --cor-fundo-card: var(--card-bg);
     --cor-fundo: var(--bs-body-bg);
@@ -40,12 +52,14 @@
     --bs-body-bg: #0f172a;          /* Slate 900 */
     --bs-body-color: #e2e8f0;       /* Slate 200 */
     --card-bg: #1e293b;             /* Slate 800 */
-    --card-border: rgba(255, 255, 255, 0.05);
-    --navbar-bg: rgba(15, 23, 42, 0.85);
-    --navbar-text: #f8fafc;
+    --card-border: #334155;         /* Slate 700 */
     --sidebar-bg: #1e293b;
-    --cor-primaria: #3b82f6;        /* Lighter Blue for Dark Mode */
-    --cor-secundaria: #fbbf24;      /* Lighter Amber */
+    --sidebar-text: #94a3b8;        /* Slate 400 */
+    --sidebar-text-active: #60a5fa; /* Blue 400 */
+    --sidebar-border: #334155;
+    --navbar-bg: #1e293b;
+    --cor-primaria: #60a5fa;        /* Light Blue */
+    --cor-secundaria: #fbbf24;      /* Amber */
     --cor-fundo-card: var(--card-bg);
     --cor-fundo: var(--bs-body-bg);
 }
@@ -56,69 +70,153 @@ body {
     color: var(--bs-body-color);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6, .display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
     font-family: 'Merriweather', serif;
     font-weight: 700;
     color: var(--bs-body-color);
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 a {
     color: var(--primary-color);
     text-decoration: none;
-    transition: color 0.2s ease;
+    transition: var(--transition-base);
 }
 
 a:hover {
     color: var(--primary-hover);
 }
 
+/* --- Layout Structure --- */
+
+/* App Wrapper for Sidebar Layout */
+#app-wrapper {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+/* Sidebar Styling */
+#sidebar-wrapper {
+    min-height: 100vh;
+    width: var(--sidebar-width);
+    margin-left: 0;
+    transition: margin 0.25s ease-out;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
+    position: fixed;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+#sidebar-wrapper .sidebar-heading {
+    padding: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+}
+
+#sidebar-wrapper .list-group {
+    width: 100%;
+}
+
+#sidebar-wrapper .list-group-item {
+    background-color: transparent;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    font-weight: 500;
+    color: var(--sidebar-text);
+    transition: var(--transition-base);
+    display: flex;
+    align-items: center;
+}
+
+#sidebar-wrapper .list-group-item i {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+    width: 24px;
+    text-align: center;
+}
+
+#sidebar-wrapper .list-group-item:hover {
+    background-color: rgba(59, 130, 246, 0.05);
+    color: var(--primary-hover);
+}
+
+#sidebar-wrapper .list-group-item.active {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--sidebar-text-active);
+    font-weight: 600;
+    border-right: 3px solid var(--sidebar-text-active);
+}
+
+/* Main Content Wrapper */
+#page-content-wrapper {
+    width: 100%;
+    margin-left: var(--sidebar-width);
+    transition: margin 0.25s ease-out;
+    background-color: var(--bs-body-bg);
+}
+
+/* Top Header in App Layout */
+.app-header {
+    height: var(--header-height);
+    background-color: var(--navbar-bg);
+    border-bottom: 1px solid var(--sidebar-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+/* Toggled State for Sidebar (Mobile/Collapsed) */
+#app-wrapper.toggled #sidebar-wrapper {
+    margin-left: calc(var(--sidebar-width) * -1);
+}
+
+#app-wrapper.toggled #page-content-wrapper {
+    margin-left: 0;
+}
+
+@media (max-width: 768px) {
+    #sidebar-wrapper {
+        margin-left: calc(var(--sidebar-width) * -1);
+    }
+    #page-content-wrapper {
+        margin-left: 0;
+    }
+    #app-wrapper.toggled #sidebar-wrapper {
+        margin-left: 0;
+    }
+    #app-wrapper.toggled #page-content-wrapper {
+        margin-left: 0; /* Overlay effect or push content? usually overlay on mobile */
+    }
+}
+
 /* --- Components --- */
 
-/* Navbar with Glassmorphism */
-.navbar {
-    background-color: var(--navbar-bg) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--card-border);
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    box-shadow: var(--box-shadow-sm);
-}
-
-.navbar-brand {
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    color: var(--primary-color) !important;
-    font-size: 1.5rem;
-}
-
-.nav-link {
-    font-weight: 500;
-    color: var(--navbar-text) !important;
-    padding: 0.5rem 1rem !important;
-    border-radius: var(--border-radius-md);
-    transition: all 0.2s ease;
-}
-
-.nav-link:hover, .nav-link.active {
-    background-color: rgba(37, 99, 235, 0.1); /* Primary with opacity */
-    color: var(--primary-color) !important;
-}
-
-/* Cards */
+/* Modern Card */
 .card {
     background-color: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: var(--border-radius-lg);
-    box-shadow: var(--box-shadow-md);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    /* overflow: hidden; Removed to allow expanded card to spill out if needed, but usually contained. */
+    box-shadow: var(--box-shadow-sm);
+    transition: var(--transition-base);
 }
 
-/* Hover effect handled specifically for course-card-wrapper */
+.card:hover {
+    box-shadow: var(--box-shadow-md);
+    transform: translateY(-2px);
+}
 
 .card-header {
     background-color: transparent;
@@ -139,40 +237,62 @@ a:hover {
 
 /* Buttons */
 .btn {
-    border-radius: var(--border-radius-md);
-    padding: 0.6rem 1.2rem;
+    border-radius: 9999px; /* Pill buttons */
+    padding: 0.6rem 1.5rem;
     font-weight: 500;
-    transition: all 0.2s ease;
     box-shadow: var(--box-shadow-sm);
+    transition: var(--transition-base);
 }
 
 .btn-primary {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
-    color: white;
 }
 
-.btn-primary:hover {
+.btn-primary:hover, .btn-primary:focus {
     background-color: var(--primary-hover);
     border-color: var(--primary-hover);
-    transform: translateY(-1px);
     box-shadow: var(--box-shadow-md);
 }
 
-.btn-outline-primary {
-    color: var(--primary-color);
-    border-color: var(--primary-color);
+/* Public Navbar (Landing Page) */
+.public-navbar {
+    background-color: var(--navbar-bg);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--card-border);
+    padding: 1rem 0;
 }
 
-.btn-outline-primary:hover {
-    background-color: var(--primary-color);
-    color: white;
+.public-navbar .nav-link {
+    color: var(--bs-body-color) !important;
+    font-weight: 500;
 }
 
-.btn-success {
-    background-color: var(--success-color);
-    border-color: var(--success-color);
+.public-navbar .nav-link:hover {
+    color: var(--primary-color) !important;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    border-radius: var(--border-radius-lg);
+    padding: 6rem 2rem;
     color: white;
+    box-shadow: var(--box-shadow-lg);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 3rem;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 150%;
+    height: 150%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+    opacity: 0.6;
 }
 
 /* Inputs */
@@ -180,63 +300,19 @@ a:hover {
     border-radius: var(--border-radius-md);
     padding: 0.75rem 1rem;
     border: 1px solid var(--card-border);
-    background-color: var(--bs-body-bg); /* Input bg matches body for slight contrast in cards */
+    background-color: var(--card-bg);
     color: var(--bs-body-color);
-    box-shadow: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-    background-color: var(--bs-body-bg);
-    color: var(--bs-body-color);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
-/* Specific Page Styles */
-
-/* Hero Section (Landing) */
-.hero-section {
-    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
-    border-radius: var(--border-radius-lg);
-    padding: 5rem 2rem;
-    color: white;
-    box-shadow: var(--box-shadow-lg);
-    position: relative;
-    overflow: hidden;
-}
-
-.hero-section::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
-    opacity: 0.5;
-}
-
-.hero-section h1 { color: white; }
-.hero-section .lead { color: rgba(255, 255, 255, 0.9); }
-
-/* Features & Icons */
-.feature-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 4rem;
-    height: 4rem;
-    margin-bottom: 1rem;
-    border-radius: var(--border-radius-md);
-    background-color: rgba(37, 99, 235, 0.1); /* Primary tint */
-    color: var(--primary-color);
-    font-size: 2rem;
-}
-
-/* Chat & Sidebar */
+/* Chat Widgets */
 #chat-header {
     border-bottom: 1px solid var(--card-border);
+    background-color: var(--card-bg);
 }
 
 #chat-body {
@@ -244,71 +320,58 @@ a:hover {
 }
 
 .message-content {
-    border-radius: var(--border-radius-lg) !important;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 1rem !important;
     padding: 0.75rem 1rem;
-    box-shadow: var(--box-shadow-sm);
 }
 
 .message.ms-auto .message-content {
     background-color: var(--primary-color);
     color: white;
+    border: none;
 }
 
 .message.ms-auto .message-content strong {
     color: rgba(255, 255, 255, 0.9);
 }
 
-/* Badges & Pills */
-.badge {
-    padding: 0.5em 0.8em;
-    border-radius: 9999px; /* Pill shape */
-    font-weight: 600;
-    letter-spacing: 0.5px;
+/* Utility */
+.shadow-hover:hover {
+    box-shadow: var(--box-shadow-md) !important;
+    transform: translateY(-2px);
 }
 
-.bg-primary { background-color: var(--primary-color) !important; }
-.bg-secondary { background-color: var(--secondary-color) !important; color: #1f2937; } /* Amber needs dark text */
+/* Online Indicators */
+.online-indicator .profile-pic { border: 3px solid var(--success-color); }
+.notification-dot { background-color: var(--danger-color); }
 
-/* Login/Register Specifics */
-.btn-home-icon {
-    background-color: var(--primary-color);
-    border: 2px solid rgba(255,255,255,0.5);
-    box-shadow: var(--box-shadow-md);
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
-/* Progress Bar */
-.progress {
-    height: 0.75rem;
-    border-radius: 9999px;
-    background-color: rgba(0, 0, 0, 0.1);
-}
-
-.progress-bar {
-    background-color: var(--success-color);
-    border-radius: 9999px;
-}
-
-/* Footer */
-footer {
-    color: var(--bs-body-color);
-    opacity: 0.8;
-}
-
-/* --- Course Card Expandable Styles --- */
-
+/* Course Card (Compact/Expanded preserved but styled) */
 .course-card-wrapper {
     position: relative;
-    height: 100%; /* Ensure it takes full height of the column */
-    /* Minimal height to ensure there is space for the card */
-    min-height: 250px;
+    height: 100%;
+    min-height: 320px;
 }
 
-/* Compact Card (Visible by default) */
 .course-card-compact {
     position: relative;
     z-index: 1;
     height: 100%;
-    transition: opacity 0.3s ease;
     background-color: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: var(--border-radius-lg);
@@ -318,67 +381,28 @@ footer {
     flex-direction: column;
 }
 
-/* Expanded Card (Hidden by default) */
 .course-card-expanded {
     position: absolute;
     top: -10px;
     left: -10px;
     right: -10px;
-    /* Allow height to grow based on content */
     min-height: calc(100% + 20px);
     background-color: var(--card-bg);
-    border: 1px solid var(--primary-color); /* Highlight border */
+    border: 2px solid var(--primary-color);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--box-shadow-lg);
-    z-index: 10;
+    z-index: 50;
     opacity: 0;
     visibility: hidden;
-    transform: scale(0.95);
-    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transform: scale(0.98);
+    transition: var(--transition-base);
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
 }
 
-/* Hover Interaction */
 .course-card-wrapper:hover .course-card-expanded {
     opacity: 1;
     visibility: visible;
     transform: scale(1);
-}
-
-/* Optional: Hide compact card content on hover to prevent bleed-through if transparent,
-   but with solid bg on expanded it's just covered. */
-/* .course-card-wrapper:hover .course-card-compact {
-    opacity: 0;
-} */
-
-.star-btn {
-    background: none;
-    border: none;
-    color: #cbd5e1; /* Slate 300 for empty stars */
-    cursor: pointer;
-    font-size: 1.25rem;
-    padding: 0;
-    transition: color 0.2s;
-}
-
-.star-rating {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: center;
-}
-
-.star-btn {
-    background: none;
-    border: none;
-    color: #cbd5e1; /* Slate 300 for empty stars */
-    cursor: pointer;
-    font-size: 1.25rem;
-    padding: 0;
-    transition: color 0.2s;
-}
-
-.star-btn.rated, .star-btn:hover, .star-btn:hover ~ .star-btn {
-    color: var(--secondary-color);
 }
